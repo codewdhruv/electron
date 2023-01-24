@@ -38,7 +38,7 @@ pipeline:
                       name: step-install-gnutar-on-mac
                       identifier: stepinstallgnutaronmac
                       spec:
-                        shell: Sh
+                        shell: Bash
                         command: |2-
                                 if [ "`uname`" == "Darwin" ]; then
                                   if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
