@@ -728,6 +728,8 @@ pipeline:
                       when:
                         stageStatus: All
                       failureStrategies: []
+            when:
+              pipelineStatus: All
         - stage:
             name: node-tests
             identifier: nodetests
