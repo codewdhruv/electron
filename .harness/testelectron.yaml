@@ -32,16 +32,14 @@ pipeline:
                   identifier: Restore_key_specific_artifacts
                   spec:
                     shell: Sh
-                    command: |
-
-                      if [ -f "generated_artifacts_<< parameters.artifact-key >>/$1" ] || [ -d "generated_artifacts_<< parameters.artifact-key >>/$1" ]; then
-                      echo Restoring $1 to $2
-                      mkdir -p $2
-                      mv generated_artifacts_<< parameters.artifact-key >>/$1 $2
-                      else
-                      echo Skipping $1 - It is not present on disk
-                      fi
-                                  
+                    command: |2-
+                                    if [ -f "generated_artifacts_<< parameters.artifact-key >>/$1" ] || [ -d "generated_artifacts_<< parameters.artifact-key >>/$1" ]; then
+                                      echo Restoring $1 to $2
+                                      mkdir -p $2
+                                      mv generated_artifacts_<< parameters.artifact-key >>/$1 $2
+                                    else
+                                      echo Skipping $1 - It is not present on disk
+                                    fi
                   description: restore_build_artifacts
               - step:
                   type: Run
