@@ -96,3 +96,6 @@ pipeline:
                   spec:
                     shell: Sh
                     command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
