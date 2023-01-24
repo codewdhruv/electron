@@ -49,6 +49,9 @@ pipeline:
                   spec:
                     shell: Sh
                     command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-electron-dist-unzip
@@ -66,6 +69,9 @@ pipeline:
                             #    unzip exits with non-zero code on such zip files unless -: is
                             #    passed.
                             unzip -:o dist.zip
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-mksnapshot-unzip
@@ -75,6 +81,9 @@ pipeline:
                     command: |-
                       cd src/out/Default
                       unzip -:o mksnapshot.zip
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-chromedriver-unzip
@@ -84,6 +93,9 @@ pipeline:
                     command: |-
                       cd src/out/Default
                       unzip -:o chromedriver.zip
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-setup-linux-for-headless-testing
@@ -94,6 +106,9 @@ pipeline:
                             if [ "`uname`" != "Darwin" ]; then
                               sh -e /etc/init.d/xvfb start
                             fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-fix-known-hosts-linux
@@ -104,6 +119,9 @@ pipeline:
                       if [ "`uname`" == "Linux" ]; then
                       ./src/electron/.circleci/fix-known-hosts.sh
                       fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: install-python2-mac
@@ -122,6 +140,9 @@ pipeline:
                           fi
                           sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
                       fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-install-signing-cert-on-mac
@@ -134,6 +155,9 @@ pipeline:
                               cd src/electron
                               ./script/codesign/generate-identity.sh
                             fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Run Electron tests
@@ -168,6 +192,9 @@ pipeline:
                       ELECTRON_TEST_RESULTS_DIR: junit
                       MOCHA_MULTI_REPORTERS: mocha-junit-reporter, tap
                       ELECTRON_DISABLE_SECURITY_WARNINGS: "1"
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Check test results existence
@@ -185,6 +212,9 @@ pipeline:
                       spec:
                         paths:
                           - src/junit
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-verify-mksnapshot
@@ -200,6 +230,9 @@ pipeline:
                                 python electron/script/verify-mksnapshot.py --source-root "$PWD" --build-dir out/Default
                               fi
                             fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-verify-chromedriver
@@ -211,6 +244,9 @@ pipeline:
                               cd src
                               python electron/script/verify-chromedriver.py --source-root "$PWD" --build-dir out/Default
                             fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: step-maybe-notify-slack-failure
