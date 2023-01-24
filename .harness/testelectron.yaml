@@ -374,11 +374,57 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Run_1
-                  identifier: Run_1
+                  name: step-depot-tools-add-to-path
+                  identifier: stepdepottoolsaddtopath
                   spec:
                     shell: Sh
-                    command: echo
+                    command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+              - step:
+                  type: Run
+                  name: step-electron-dist-unzip
+                  identifier: stepelectrondistunzip
+                  spec:
+                    shell: Sh
+                    command: |2-
+                            cd src/out/Default
+                            # -o  overwrite files WITHOUT prompting
+                            # TODO(alexeykuzmin): Remove '-o' when it's no longer needed.
+                            # -: allows to extract archive members into  locations  outside
+                            #    of the current ``extraction root folder''.
+                            #    ASan builds have the llvm-symbolizer binaries listed as
+                            #    runtime_deps, with their paths as `../../third_party/...`
+                            #    unzip exits with non-zero code on such zip files unless -: is
+                            #    passed.
+                            unzip -:o dist.zip
+              - step:
+                  type: Run
+                  name: step-setup-linux-for-headless-testing
+                  identifier: stepsetuplinuxforheadlesstesting
+                  spec:
+                    shell: Sh
+                    command: |2-
+                            if [ "`uname`" != "Darwin" ]; then
+                              sh -e /etc/init.d/xvfb start
+                            fi
+              - step:
+                  type: Run
+                  name: step-fix-known-hosts-linux
+                  identifier: stepfixknownhostslinux
+                  spec:
+                    shell: Sh
+                    command: |-
+                      if [ "`uname`" == "Linux" ]; then
+                      ./src/electron/.circleci/fix-known-hosts.sh
+                      fi
+              - step:
+                  type: Run
+                  name: Run Nan Tests
+                  identifier: Run_Nan_Tests
+                  spec:
+                    shell: Sh
+                    command: |2-
+                                  cd src
+                                  node electron/script/nan-spec-runner.js
     - stage:
         name: Builds
         identifier: Builds
