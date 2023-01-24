@@ -31,7 +31,7 @@ pipeline:
                   identifier: Run_1
                   spec:
                     shell: Sh
-                    command: "at: ."
+                    command: rm -rf src/electron
     - parallel:
         - stage:
             name: electron-tests
