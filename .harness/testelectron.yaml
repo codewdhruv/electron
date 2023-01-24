@@ -28,6 +28,31 @@ pipeline:
             steps:
               - step:
                   type: Run
+                  name: Restore key specific artifacts
+                  identifier: Restore_key_specific_artifacts
+                  spec:
+                    shell: Sh
+                    command: |2
+                                  mv_if_exist() {
+                                    if [ -f "generated_artifacts_<< parameters.artifact-key >>/$1" ] || [ -d "generated_artifacts_<< parameters.artifact-key >>/$1" ]; then
+                                      echo Restoring $1 to $2
+                                      mkdir -p $2
+                                      mv generated_artifacts_<< parameters.artifact-key >>/$1 $2
+                                    else
+                                      echo Skipping $1 - It is not present on disk
+                                    fi
+                                  }
+                                  mv_if_exist dist.zip src/out/Default
+                                  mv_if_exist node_headers.tar.gz src/out/Default/gen
+                                  mv_if_exist symbols.zip src/out/Default
+                                  mv_if_exist mksnapshot.zip src/out/Default
+                                  mv_if_exist chromedriver.zip src/out/Default
+                                  mv_if_exist ffmpeg.zip src/out/ffmpeg
+                                  mv_if_exist hunspell_dictionaries.zip src/out/Default
+                                  mv_if_exist cross-arch-snapshots src
+                  description: restore_build_artifacts
+              - step:
+                  type: Run
                   name: Electron tests
                   identifier: Electron_tests
                   spec:
@@ -181,3 +206,20 @@ pipeline:
                   when:
                     stageStatus: All
                   failureStrategies: []
+  variables:
+    - name: MOCHA_REPORTER
+      type: String
+      description: ""
+      value: mocha-multi-reporters
+    - name: ELECTRON_TEST_RESULTS_DIR
+      type: String
+      description: ""
+      value: junit
+    - name: MOCHA_MULTI_REPORTERS
+      type: String
+      description: ""
+      value: mocha-junit-reporter, tap
+    - name: ELECTRON_DISABLE_SECURITY_WARNINGS
+      type: String
+      description: ""
+      value: "1"
