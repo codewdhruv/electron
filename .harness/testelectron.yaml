@@ -943,6 +943,8 @@ pipeline:
                   when:
                     stageStatus: All
                   failureStrategies: []
+        when:
+          pipelineStatus: All
   variables:
     - name: MOCHA_REPORTER
       type: String
