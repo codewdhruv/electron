@@ -33,6 +33,7 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |2-
+                                  mv_if_exist() {
                                     if [ -f "generated_artifacts_<< parameters.artifact-key >>/$1" ] || [ -d "generated_artifacts_<< parameters.artifact-key >>/$1" ]; then
                                       echo Restoring $1 to $2
                                       mkdir -p $2
@@ -40,6 +41,7 @@ pipeline:
                                     else
                                       echo Skipping $1 - It is not present on disk
                                     fi
+                                  }
                   description: restore_build_artifacts
               - step:
                   type: Run
