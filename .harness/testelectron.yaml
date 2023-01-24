@@ -409,6 +409,9 @@ pipeline:
                                 #    unzip exits with non-zero code on such zip files unless -: is
                                 #    passed.
                                 unzip -:o dist.zip
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
                   - step:
                       type: Run
                       name: step-setup-linux-for-headless-testing
@@ -419,6 +422,9 @@ pipeline:
                                 if [ "`uname`" != "Darwin" ]; then
                                   sh -e /etc/init.d/xvfb start
                                 fi
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
                   - step:
                       type: Run
                       name: step-fix-known-hosts-linux
@@ -429,6 +435,9 @@ pipeline:
                           if [ "`uname`" == "Linux" ]; then
                           ./src/electron/.circleci/fix-known-hosts.sh
                           fi
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
                   - step:
                       type: Run
                       name: Run Node Tests
@@ -443,6 +452,9 @@ pipeline:
                           spec:
                             paths:
                               - src/junit
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
     - stage:
         name: Builds
         identifier: Builds
