@@ -12,8 +12,8 @@ pipeline:
         build: <+input>
   stages:
     - stage:
-        name: Run Electron Tests
-        identifier: Run_Electron_Tests
+        name: Electron Tests
+        identifier: Electron_Tests
         description: ""
         type: CI
         spec:
