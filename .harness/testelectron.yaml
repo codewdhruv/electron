@@ -297,17 +297,28 @@ pipeline:
                         command: |-
                           rm -rf src/third_party/electron_node/deps/openssl
                           rm -rf src/third_party/electron_node/deps/v8
-              - step:
-                  type: Run
-                  name: step-delete-git-directories
-                  identifier: stepdeletegitdirectories
-                  spec:
-                    shell: Sh
-                    command: |-
-                      if [ "`uname`" == "Darwin" ]; then
-                      cd src
-                      ( find . -type d -name ".git" -not -path "./third_party/angle/*" -not -path "./third_party/dawn/*" -not -path "./electron/*" ) | xargs rm -rf
-                      fi
+              - parallel:
+                  - step:
+                      type: Run
+                      name: step-delete-git-directories
+                      identifier: stepdeletegitdirectories
+                      spec:
+                        shell: Sh
+                        command: |-
+                          if [ "`uname`" == "Darwin" ]; then
+                          cd src
+                          ( find . -type d -name ".git" -not -path "./third_party/angle/*" -not -path "./third_party/dawn/*" -not -path "./electron/*" ) | xargs rm -rf
+                          fi
+                  - step:
+                      type: Run
+                      name: Move src folder to the cross-OS portal
+                      identifier: Move_src_folder_to_the_crossOS_portal
+                      spec:
+                        shell: Sh
+                        command: |-
+                          sudo mkdir -p /var/portal
+                          sudo chown -R $(id -u):$(id -g) /var/portal
+                          mv ./src /var/portal
     - parallel:
         - stage:
             name: electron-tests
