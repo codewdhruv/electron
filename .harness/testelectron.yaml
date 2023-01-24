@@ -14,7 +14,6 @@ pipeline:
     - stage:
         name: Builds
         identifier: Builds
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
@@ -32,9 +31,9 @@ pipeline:
                   identifier: Pack_config
                   spec:
                     shell: Sh
-                    command: |-
-                      cd .circleci/config
-                      yarn
-                      export CIRCLECI_BINARY="$HOME/circleci"
-                      curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | DESTDIR=$CIRCLECI_BINARY bash
-                      node build.js
+                    command: |2-
+                            if [ "$NOTIFY_SLACK" == "true" ]; then
+                              export MESSAGE="Build failed for *<$CIRCLE_BUILD_URL|$CIRCLE_JOB>* nightly build from *$CIRCLE_BRANCH*."
+                              curl -g -H "Content-Type: application/json" -X POST \
+                              -d "{\"text\": \"$MESSAGE\", \"attachments\": [{\"color\": \"#FC5C3C\",\"title\": \"$CIRCLE_JOB nightly build results\",\"title_link\": \"$CIRCLE_BUILD_URL\"}]}" $SLACK_WEBHOOK
+                            fi
