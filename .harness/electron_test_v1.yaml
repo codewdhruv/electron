@@ -1,0 +1,246 @@
+template:
+  name: electron test
+  type: Stage
+  projectIdentifier: NgLabs
+  orgIdentifier: default
+  spec:
+    type: CI
+    spec:
+      cloneCodebase: true
+      platform:
+        os: Linux
+        arch: Amd64
+      runtime:
+        type: Cloud
+        spec: {}
+      execution:
+        steps:
+          - step:
+              type: Run
+              name: restore_build_artifacts
+              identifier: Restore_key_specific_artifacts
+              spec:
+                shell: Sh
+                command: |-
+                  mv_if_exist dist.zip src/out/Default
+                  mv_if_exist node_headers.tar.gz src/out/Default/gen
+                  mv_if_exist symbols.zip src/out/Default
+                  mv_if_exist mksnapshot.zip src/out/Default
+                  mv_if_exist chromedriver.zip src/out/Default
+                  mv_if_exist ffmpeg.zip src/out/ffmpeg
+                  mv_if_exist hunspell_dictionaries.zip src/out/Default
+                  mv_if_exist cross-arch-snapshots src
+              description: restore_build_artifacts
+          - step:
+              type: Run
+              name: step-depot-tools-add-to-path
+              identifier: stepdepottoolsaddtopath
+              spec:
+                shell: Sh
+                command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+          - step:
+              type: Run
+              name: step-electron-dist-unzip
+              identifier: stepelectrondistunzip
+              spec:
+                shell: Sh
+                command: |2
+                        cd src/out/Default
+                        # -o  overwrite files WITHOUT prompting
+                        # TODO(alexeykuzmin): Remove '-o' when it's no longer needed.
+                        # -: allows to extract archive members into  locations  outside
+                        #    of the current ``extraction root folder''.
+                        #    ASan builds have the llvm-symbolizer binaries listed as
+                        #    runtime_deps, with their paths as `../../third_party/...`
+                        #    unzip exits with non-zero code on such zip files unless -: is
+                        #    passed.
+                        unzip -:o dist.zip
+          - step:
+              type: Run
+              name: step-mksnapshot-unzip
+              identifier: stepmksnapshotunzip
+              spec:
+                shell: Sh
+                command: |-
+                  cd src/out/Default
+                  unzip -:o mksnapshot.zip
+          - step:
+              type: Run
+              name: step-chromedriver-unzip
+              identifier: stepchromedriverunzip
+              spec:
+                shell: Sh
+                command: |-
+                  cd src/out/Default
+                  unzip -:o chromedriver.zip
+          - step:
+              type: Run
+              name: step-setup-linux-for-headless-testing
+              identifier: stepsetuplinuxforheadlesstesting
+              spec:
+                shell: Sh
+                command: |2
+                        if [ "`uname`" != "Darwin" ]; then
+                          sh -e /etc/init.d/xvfb start
+                        fi
+          - step:
+              type: Run
+              name: step-fix-known-hosts-linux
+              identifier: stepfixknownhostslinux
+              spec:
+                shell: Sh
+                command: |-
+                  if [ "`uname`" == "Linux" ]; then
+                  ./src/electron/.circleci/fix-known-hosts.sh
+                  fi
+          - step:
+              type: Run
+              name: install-python2-mac
+              identifier: installpython2mac
+              spec:
+                shell: Sh
+                command: |-
+                  if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
+                      if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
+                      mkdir python-downloads
+                      echo 'Downloading Python 2.7.18'
+                      curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                      mv python-2.7.18-macosx10.9.pkg python-downloads
+                      else
+                      echo 'Using Python install from cache'
+                      fi
+                      sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
+                  fi
+          - step:
+              type: Run
+              name: step-install-signing-cert-on-mac
+              identifier: stepinstallsigningcertonmac
+              spec:
+                shell: Sh
+                command: |2-
+                        if  [ "$TARGET_ARCH" != "arm64" ] && [ "`uname`" == "Darwin" ]; then
+                          sudo security authorizationdb write com.apple.trust-settings.admin allow
+                          cd src/electron
+                          ./script/codesign/generate-identity.sh
+                        fi
+          - step:
+              type: Run
+              name: Run Electron tests
+              identifier: Electron_tests
+              spec:
+                shell: Sh
+                command: |2-
+                              cd src
+                              if [ "$IS_ASAN" == "1" ]; then
+                                ASAN_SYMBOLIZE="$PWD/tools/valgrind/asan/asan_symbolize.py --executable-path=$PWD/out/Default/electron"
+                                export ASAN_OPTIONS="symbolize=0 handle_abort=1"
+                                export G_SLICE=always-malloc
+                                export NSS_DISABLE_ARENA_FREE_LIST=1
+                                export NSS_DISABLE_UNLOAD=1
+                                export LLVM_SYMBOLIZER_PATH=$PWD/third_party/llvm-build/Release+Asserts/bin/llvm-symbolizer
+                                export MOCHA_TIMEOUT=180000
+                                echo "Piping output to ASAN_SYMBOLIZE ($ASAN_SYMBOLIZE)"
+                                (cd electron && node script/yarn test --runners=main --trace-uncaught --enable-logging --files $(circleci tests glob spec/*-spec.ts | circleci tests split --split-by=timings)) 2>&1 | $ASAN_SYMBOLIZE
+                              else
+                                if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
+                                  export ELECTRON_SKIP_NATIVE_MODULE_TESTS=true
+                                  (cd electron && node script/yarn test --runners=main --trace-uncaught --enable-logging)
+                                else
+                                  if [ "$TARGET_ARCH" == "ia32" ]; then
+                                    npm_config_arch=x64 node electron/node_modules/dugite/script/download-git.js
+                                  fi
+                                  (cd electron && node script/yarn test --runners=main --trace-uncaught --enable-logging --files $(circleci tests glob spec/*-spec.ts | circleci tests split --split-by=timings))
+                                fi
+                              fi
+                envVariables:
+                  MOCHA_REPORTER: mocha-multi-reporters
+                  ELECTRON_TEST_RESULTS_DIR: junit
+                  MOCHA_MULTI_REPORTERS: mocha-junit-reporter, tap
+                  ELECTRON_DISABLE_SECURITY_WARNINGS: "1"
+          - step:
+              type: Run
+              name: Check test results existence
+              identifier: Check_test_results_existence
+              spec:
+                shell: Sh
+                command: |2-
+                              cd src
+                              # Check if test results exist and are not empty.
+                              if [ ! -s "junit/test-results-main.xml" ]; then
+                                exit 1
+                              fi
+                reports:
+                  type: JUnit
+                  spec:
+                    paths:
+                      - src/junit
+          - step:
+              type: Run
+              name: step-verify-mksnapshot
+              identifier: stepverifymksnapshot
+              spec:
+                shell: Sh
+                command: |2-
+                        if [ "$IS_ASAN" != "1" ]; then
+                          cd src
+                          if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
+                            python electron/script/verify-mksnapshot.py --source-root "$PWD" --build-dir out/Default --snapshot-files-dir $PWD/cross-arch-snapshots
+                          else
+                            python electron/script/verify-mksnapshot.py --source-root "$PWD" --build-dir out/Default
+                          fi
+                        fi
+          - step:
+              type: Run
+              name: step-verify-chromedriver
+              identifier: stepverifychromedriver
+              spec:
+                shell: Sh
+                command: |2-
+                        if [ "$IS_ASAN" != "1" ]; then
+                          cd src
+                          python electron/script/verify-chromedriver.py --source-root "$PWD" --build-dir out/Default
+                        fi
+          - step:
+              type: Run
+              name: step-maybe-notify-slack-failure
+              identifier: stepmaybenotifyslackfailure
+              spec:
+                shell: Sh
+                command: |2-
+                        if [ "$NOTIFY_SLACK" == "true" ]; then
+                          export MESSAGE="Build failed for *<$CIRCLE_BUILD_URL|$CIRCLE_JOB>* nightly build from *$CIRCLE_BRANCH*."
+                          curl -g -H "Content-Type: application/json" -X POST \
+                          -d "{\"text\": \"$MESSAGE\", \"attachments\": [{\"color\": \"#FC5C3C\",\"title\": \"$CIRCLE_JOB nightly build results\",\"title_link\": \"$CIRCLE_BUILD_URL\"}]}" $SLACK_WEBHOOK
+                        fi
+              when:
+                stageStatus: Success
+                condition: <+pipeline.stages.cond.spec.execution.steps.echo.status> == "FAILED"
+              failureStrategies: []
+          - step:
+              type: Run
+              name: step-maybe-cleanup-arm64-mac
+              identifier: stepmaybecleanuparm64mac
+              spec:
+                shell: Sh
+                command: |2-
+                        if  [ "$TARGET_ARCH" == "arm64" ] &&[ "`uname`" == "Darwin" ]; then
+                          killall Electron || echo "No Electron processes left running"
+                          killall Safari || echo "No Safari processes left running"
+                          rm -rf ~/Library/Application\ Support/Electron*
+                          rm -rf ~/Library/Application\ Support/electron*
+                          security delete-generic-password -l "Chromium Safe Storage" || echo "✓ Keychain does not contain password from tests"
+                          security delete-generic-password -l "Electron Test Main Safe Storage" || echo "✓ Keychain does not contain password from tests"
+                          security delete-generic-password -a "electron-test-safe-storage" || echo "✓ Keychain does not contain password from tests"
+                          security delete-generic-password -l "electron-test-safe-storage Safe Storage" || echo "✓ Keychain does not contain password from tests"
+                        elif [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
+                          XVFB=/usr/bin/Xvfb
+                          /sbin/start-stop-daemon --stop --exec $XVFB || echo "Xvfb not running"
+                          pkill electron || echo "electron not running"
+                          rm -rf ~/.config/Electron*
+                          rm -rf ~/.config/electron*
+                        fi
+              when:
+                stageStatus: All
+              failureStrategies: []
+  identifier: electron_test
+  versionLabel: v1
