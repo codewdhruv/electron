@@ -77,7 +77,66 @@ pipeline:
                       unzip -:o mksnapshot.zip
               - step:
                   type: Run
-                  name: Electron tests
+                  name: step-chromedriver-unzip
+                  identifier: stepchromedriverunzip
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd src/out/Default
+                      unzip -:o chromedriver.zip
+              - step:
+                  type: Run
+                  name: step-setup-linux-for-headless-testing
+                  identifier: stepsetuplinuxforheadlesstesting
+                  spec:
+                    shell: Sh
+                    command: |2
+                            if [ "`uname`" != "Darwin" ]; then
+                              sh -e /etc/init.d/xvfb start
+                            fi
+              - step:
+                  type: Run
+                  name: step-fix-known-hosts-linux
+                  identifier: stepfixknownhostslinux
+                  spec:
+                    shell: Sh
+                    command: |-
+                      if [ "`uname`" == "Linux" ]; then
+                      ./src/electron/.circleci/fix-known-hosts.sh
+                      fi
+              - step:
+                  type: Run
+                  name: install-python2-mac
+                  identifier: installpython2mac
+                  spec:
+                    shell: Sh
+                    command: |-
+                      if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
+                          if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
+                          mkdir python-downloads
+                          echo 'Downloading Python 2.7.18'
+                          curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                          mv python-2.7.18-macosx10.9.pkg python-downloads
+                          else
+                          echo 'Using Python install from cache'
+                          fi
+                          sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
+                      fi
+              - step:
+                  type: Run
+                  name: step-install-signing-cert-on-mac
+                  identifier: stepinstallsigningcertonmac
+                  spec:
+                    shell: Sh
+                    command: |2-
+                            if  [ "$TARGET_ARCH" != "arm64" ] && [ "`uname`" == "Darwin" ]; then
+                              sudo security authorizationdb write com.apple.trust-settings.admin allow
+                              cd src/electron
+                              ./script/codesign/generate-identity.sh
+                            fi
+              - step:
+                  type: Run
+                  name: Run Electron tests
                   identifier: Electron_tests
                   spec:
                     shell: Sh
@@ -104,6 +163,28 @@ pipeline:
                                       (cd electron && node script/yarn test --runners=main --trace-uncaught --enable-logging --files $(circleci tests glob spec/*-spec.ts | circleci tests split --split-by=timings))
                                     fi
                                   fi
+                    envVariables:
+                      MOCHA_REPORTER: mocha-multi-reporters
+                      ELECTRON_TEST_RESULTS_DIR: junit
+                      MOCHA_MULTI_REPORTERS: mocha-junit-reporter, tap
+                      ELECTRON_DISABLE_SECURITY_WARNINGS: "1"
+              - step:
+                  type: Run
+                  name: Check test results existence
+                  identifier: Check_test_results_existence
+                  spec:
+                    shell: Sh
+                    command: |2-
+                                  cd src
+                                  # Check if test results exist and are not empty.
+                                  if [ ! -s "junit/test-results-main.xml" ]; then
+                                    exit 1
+                                  fi
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - src/junit
     - stage:
         name: Builds
         identifier: Builds
