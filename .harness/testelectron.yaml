@@ -89,3 +89,4 @@ pipeline:
                       # Remove swift-format dep from cipd on macOS until we send a patch upstream.
                       cd depot_tools
                       patch gclient.py -R \<<'EOF'
+                      fi
