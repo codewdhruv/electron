@@ -28,8 +28,8 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Run Electron tests
-                  identifier: Run_Electron_tests
+                  name: Electron tests
+                  identifier: Electron_tests
                   spec:
                     shell: Sh
                     command: |2-
