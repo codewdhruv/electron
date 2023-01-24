@@ -815,6 +815,8 @@ pipeline:
                       when:
                         stageStatus: All
                       failureStrategies: []
+            when:
+              pipelineStatus: All
     - stage:
         name: Builds
         identifier: Builds
