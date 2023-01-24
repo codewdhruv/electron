@@ -88,5 +88,4 @@ pipeline:
                       sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
                       # Remove swift-format dep from cipd on macOS until we send a patch upstream.
                       cd depot_tools
-                      EOF
                       fi
