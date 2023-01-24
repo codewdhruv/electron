@@ -25,178 +25,289 @@ pipeline:
             spec: {}
           execution:
             steps:
+              - parallel:
+                  - step:
+                      type: Run
+                      name: attach_workspace
+                      identifier: Run_1
+                      spec:
+                        shell: Sh
+                        command: rm -rf src/electron
+                  - step:
+                      type: Run
+                      name: step-install-gnutar-on-mac
+                      identifier: stepinstallgnutaronmac
+                      spec:
+                        shell: Sh
+                        command: |2-
+                                if [ "`uname`" == "Darwin" ]; then
+                                  if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
+                                    brew update
+                                    brew install gnu-tar
+                                  fi
+                                  ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                                fi
+                  - step:
+                      type: Run
+                      name: install-python2-mac
+                      identifier: installpython2mac
+                      spec:
+                        shell: Sh
+                        command: |-
+                          if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
+                              if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
+                              mkdir python-downloads
+                              echo 'Downloading Python 2.7.18'
+                              curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                              mv python-2.7.18-macosx10.9.pkg python-downloads
+                              else
+                              echo 'Using Python install from cache'
+                              fi
+                              sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
+                          fi
+                  - step:
+                      type: Run
+                      name: step-setup-goma-for-build
+                      identifier: stepsetupgomaforbuild
+                      spec:
+                        shell: Sh
+                        command: |2-
+                                echo 'export NUMBER_OF_NINJA_PROCESSES=300' >> $BASH_ENV
+                                if [ "`uname`" == "Darwin" ]; then
+                                  echo 'ulimit -n 10000' >> $BASH_ENV
+                                  echo 'sudo launchctl limit maxfiles 65536 200000' >> $BASH_ENV
+                                fi
+                                if [ ! -z "$RAW_GOMA_AUTH" ]; then
+                                  echo $RAW_GOMA_AUTH > ~/.goma_oauth2_config
+                                fi
+                                git clone https://github.com/electron/build-tools.git
+                                cd build-tools
+                                npm install
+                                mkdir third_party
+                                node -e "require('./src/utils/goma.js').downloadAndPrepare({ gomaOneForAll: true })"
+                                export GOMA_FALLBACK_ON_AUTH_FAILURE=true
+                                third_party/goma/goma_ctl.py ensure_start
+                                if [ ! -z "$RAW_GOMA_AUTH" ] && [ "`third_party/goma/goma_auth.py info`" != "Login as Fermi Planck" ]; then
+                                  echo "WARNING!!!!!! Goma authentication is incorrect; please update Goma auth token."
+                                  exit 1
+                                fi
+                                echo 'export GN_GOMA_FILE='`node -e "console.log(require('./src/utils/goma.js').gnFilePath)"` >> $BASH_ENV
+                                echo 'export LOCAL_GOMA_DIR='`node -e "console.log(require('./src/utils/goma.js').dir)"` >> $BASH_ENV
+                                echo 'export GOMA_FALLBACK_ON_AUTH_FAILURE=true' >> $BASH_ENV
+                                cd ..
+                                touch "${TMPDIR:=/tmp}"/.goma-ready
+              - parallel:
+                  - step:
+                      type: Run
+                      name: step-depot-tools-get
+                      identifier: stepdepottoolsget
+                      spec:
+                        shell: Sh
+                        command: |2-
+                                git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+                                if [ "`uname`" == "Darwin" ]; then
+                                  # remove ninjalog_uploader_wrapper.py from autoninja since we don't use it and it causes problems
+                                  sed -i '' '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                                else
+                                  sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                                  # Remove swift-format dep from cipd on macOS until we send a patch upstream.
+                                  cd depot_tools
+                                  patch gclient.py -R \<<'EOF'
+                                676,677c676
+                                <         packages = dep_value.get('packages', [])
+                                <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
+                                ---
+                                >         for package in dep_value.get('packages', []):
+                                EOF
+                                fi
+                  - step:
+                      type: Run
+                      name: step-depot-tools-add-to-path
+                      identifier: stepdepottoolsaddtopath
+                      spec:
+                        shell: Sh
+                        command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+                  - step:
+                      type: Run
+                      name: step-get-more-space-on-mac
+                      identifier: stepgetmorespaceonmac
+                      spec:
+                        shell: Sh
+                        command: |2-
+                                if [ "`uname`" == "Darwin" ]; then
+                                  sudo mkdir -p $TMPDIR/del-target
+                                  tmpify() {
+                                    if [ -d "$1" ]; then
+                                      sudo mv "$1" $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
+                                    fi
+                                  }
+                                  strip_arm_deep() {
+                                    opwd=$(pwd)
+                                    cd $1
+                                    f=$(find . -perm +111 -type f)
+                                    for fp in $f
+                                    do
+                                      if [[ $(file "$fp") == *"universal binary"* ]]; then
+                                        if [[ $(file "$fp") == *"arm64e)"* ]]; then
+                                          sudo lipo -remove arm64e "$fp" -o "$fp" || true
+                                        fi
+                                        if [[ $(file "$fp") == *"arm64)"* ]]; then
+                                          sudo lipo -remove arm64 "$fp" -o "$fp" || true
+                                        fi
+                                      fi
+                                    done
+                                    cd $opwd
+                                  }
+                                  tmpify /Library/Developer/CoreSimulator
+                                  tmpify ~/Library/Developer/CoreSimulator
+                                  tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
+                                  tmpify $(xcode-select -p)/Platforms/iPhoneOS.platform
+                                  tmpify $(xcode-select -p)/Platforms/WatchOS.platform
+                                  tmpify $(xcode-select -p)/Platforms/WatchSimulator.platform
+                                  tmpify $(xcode-select -p)/Platforms/AppleTVSimulator.platform
+                                  tmpify $(xcode-select -p)/Platforms/iPhoneSimulator.platform
+                                  tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/metal/ios
+                                  tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift
+                                  tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0
+                                  tmpify ~/.rubies
+                                  tmpify ~/Library/Caches/Homebrew
+                                  tmpify /usr/local/Homebrew
+                                  sudo rm -rf $TMPDIR/del-target
+                                  # sudo rm -rf "/System/Library/Desktop Pictures"
+                                  # sudo rm -rf /System/Library/Templates/Data
+                                  # sudo rm -rf /System/Library/Speech/Voices
+                                  # sudo rm -rf "/System/Library/Screen Savers"
+                                  # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs
+                                  # sudo rm -rf "/System/Volumes/Data/Library/Application Support/Apple/Photos/Print Products"
+                                  # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/
+                                  # sudo rm -rf /System/Volumes/Data/Library/Java
+                                  # sudo rm -rf /System/Volumes/Data/Library/Ruby
+                                  # sudo rm -rf /System/Volumes/Data/Library/Printers
+                                  # sudo rm -rf /System/iOSSupport
+                                  # sudo rm -rf /System/Applications/*.app
+                                  # sudo rm -rf /System/Applications/Utilities/*.app
+                                  # sudo rm -rf /System/Library/LinguisticData
+                                  # sudo rm -rf /System/Volumes/Data/private/var/db/dyld/*
+                                  # sudo rm -rf /System/Library/Fonts/*
+                                  # sudo rm -rf /System/Library/PreferencePanes
+                                  # sudo rm -rf /System/Library/AssetsV2/*
+                                  sudo rm -rf /Applications/Safari.app
+                                  sudo rm -rf ~/project/src/build/linux
+                                  sudo rm -rf ~/project/src/third_party/catapult/tracing/test_data
+                                  sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
+                                  # lipo off some huge binaries arm64 versions to save space
+                                  strip_arm_deep $(xcode-select -p)/../SharedFrameworks
+                                  # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
+                                fi
+                  - step:
+                      type: Run
+                      name: step-generate-deps-hash
+                      identifier: stepgeneratedepshash
+                      spec:
+                        shell: Sh
+                        command: node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
+              - parallel:
+                  - step:
+                      type: Run
+                      name: step-touch-sync-done
+                      identifier: steptouchsyncdone
+                      spec:
+                        shell: Sh
+                        command: touch src/electron/.circle-sync-done
+                  - step:
+                      type: Run
+                      name: step-gclient-sync
+                      identifier: stepgclientsync
+                      spec:
+                        shell: Sh
+                        command: |2-
+                                # If we did not restore a complete sync then we need to sync for realz
+                                if [ ! -s "src/electron/.circle-sync-done" ]; then
+                                  gclient config \
+                                    --name "src/electron" \
+                                    --unmanaged \
+                                    $GCLIENT_EXTRA_ARGS \
+                                    "$CIRCLE_REPOSITORY_URL"
+                                  ELECTRON_USE_THREE_WAY_MERGE_FOR_PATCHES=1 gclient sync --with_branch_heads --with_tags
+                                  if [ "$IS_RELEASE" != "true" ]; then
+                                    # Re-export all the patches to check if there were changes.
+                                    python src/electron/script/export_all_patches.py src/electron/patches/config.json
+                                    cd src/electron
+                                    git update-index --refresh || true
+                                    if ! git diff-index --quiet HEAD --; then
+                                      # There are changes to the patches. Make a git commit with the updated patches
+                                      git add patches
+                                      GIT_COMMITTER_NAME="PatchUp" GIT_COMMITTER_EMAIL="73610968+patchup[bot]@users.noreply.github.com" git commit -m "chore: update patches" --author="PatchUp <73610968+patchup[bot]@users.noreply.github.com>"
+                                      # Export it
+                                      mkdir -p ../../patches
+                                      git format-patch -1 --stdout --keep-subject --no-stat --full-index > ../../patches/update-patches.patch
+                                      if (node ./script/push-patch.js 2> /dev/null > /dev/null); then
+                                        echo
+                                        echo "======================================================================"
+                                        echo "Changes to the patches when applying, we have auto-pushed the diff to the current branch"
+                                        echo "A new CI job will kick off shortly"
+                                        echo "======================================================================"
+                                        exit 1
+                                      else
+                                        echo
+                                        echo "======================================================================"
+                                        echo "There were changes to the patches when applying."
+                                        echo "Check the CI artifacts for a patch you can apply to fix it."
+                                        echo "======================================================================"
+                                        exit 1
+                                      fi
+                                    fi
+                                  fi
+                                fi
               - step:
                   type: Run
-                  name: attach_workspace
-                  identifier: Run_1
+                  name: Wipe Electron
+                  identifier: Wipe_Electron
                   spec:
                     shell: Sh
                     command: rm -rf src/electron
+              - parallel:
+                  - step:
+                      type: Run
+                      name: step-generate-deps-hash-cleanly
+                      identifier: stepgeneratedepshashcleanly
+                      spec:
+                        shell: Sh
+                        command: (cd src/electron && git checkout .) && node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
+                  - step:
+                      type: Run
+                      name: step-run-electron-only-hooks
+                      identifier: steprunelectrononlyhooks
+                      spec:
+                        shell: Sh
+                        command: gclient runhooks --spec="solutions=[{'name':'src/electron','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
+                  - step:
+                      type: Run
+                      name: step-mark-sync-done
+                      identifier: stepmarksyncdone
+                      spec:
+                        shell: Sh
+                        command: echo DONE > src/electron/.circle-sync-done
+                  - step:
+                      type: Run
+                      name: step-minimize-workspace-size-from-checkout
+                      identifier: stepminimizeworkspacesizefromcheckout
+                      spec:
+                        shell: Sh
+                        command: |-
+                          rm -rf src/third_party/electron_node/deps/openssl
+                          rm -rf src/third_party/electron_node/deps/v8
               - step:
                   type: Run
-                  name: step-install-gnutar-on-mac
-                  identifier: stepinstallgnutaronmac
-                  spec:
-                    shell: Sh
-                    command: |2-
-                            if [ "`uname`" == "Darwin" ]; then
-                              if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
-                                brew update
-                                brew install gnu-tar
-                              fi
-                              ln -fs /usr/local/bin/gtar /usr/local/bin/tar
-                            fi
-              - step:
-                  type: Run
-                  name: install-python2-mac
-                  identifier: installpython2mac
+                  name: step-delete-git-directories
+                  identifier: stepdeletegitdirectories
                   spec:
                     shell: Sh
                     command: |-
-                      if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
-                          if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
-                          mkdir python-downloads
-                          echo 'Downloading Python 2.7.18'
-                          curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
-                          mv python-2.7.18-macosx10.9.pkg python-downloads
-                          else
-                          echo 'Using Python install from cache'
-                          fi
-                          sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
+                      if [ "`uname`" == "Darwin" ]; then
+                      cd src
+                      ( find . -type d -name ".git" -not -path "./third_party/angle/*" -not -path "./third_party/dawn/*" -not -path "./electron/*" ) | xargs rm -rf
                       fi
-              - step:
-                  type: Run
-                  name: step-setup-goma-for-build
-                  identifier: stepsetupgomaforbuild
-                  spec:
-                    shell: Sh
-                    command: |2-
-                            echo 'export NUMBER_OF_NINJA_PROCESSES=300' >> $BASH_ENV
-                            if [ "`uname`" == "Darwin" ]; then
-                              echo 'ulimit -n 10000' >> $BASH_ENV
-                              echo 'sudo launchctl limit maxfiles 65536 200000' >> $BASH_ENV
-                            fi
-                            if [ ! -z "$RAW_GOMA_AUTH" ]; then
-                              echo $RAW_GOMA_AUTH > ~/.goma_oauth2_config
-                            fi
-                            git clone https://github.com/electron/build-tools.git
-                            cd build-tools
-                            npm install
-                            mkdir third_party
-                            node -e "require('./src/utils/goma.js').downloadAndPrepare({ gomaOneForAll: true })"
-                            export GOMA_FALLBACK_ON_AUTH_FAILURE=true
-                            third_party/goma/goma_ctl.py ensure_start
-                            if [ ! -z "$RAW_GOMA_AUTH" ] && [ "`third_party/goma/goma_auth.py info`" != "Login as Fermi Planck" ]; then
-                              echo "WARNING!!!!!! Goma authentication is incorrect; please update Goma auth token."
-                              exit 1
-                            fi
-                            echo 'export GN_GOMA_FILE='`node -e "console.log(require('./src/utils/goma.js').gnFilePath)"` >> $BASH_ENV
-                            echo 'export LOCAL_GOMA_DIR='`node -e "console.log(require('./src/utils/goma.js').dir)"` >> $BASH_ENV
-                            echo 'export GOMA_FALLBACK_ON_AUTH_FAILURE=true' >> $BASH_ENV
-                            cd ..
-                            touch "${TMPDIR:=/tmp}"/.goma-ready
-              - step:
-                  type: Run
-                  name: step-depot-tools-get
-                  identifier: stepdepottoolsget
-                  spec:
-                    shell: Sh
-                    command: |2-
-                            git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-                            if [ "`uname`" == "Darwin" ]; then
-                              # remove ninjalog_uploader_wrapper.py from autoninja since we don't use it and it causes problems
-                              sed -i '' '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
-                            else
-                              sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
-                              # Remove swift-format dep from cipd on macOS until we send a patch upstream.
-                              cd depot_tools
-                              patch gclient.py -R \<<'EOF'
-                            676,677c676
-                            <         packages = dep_value.get('packages', [])
-                            <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
-                            ---
-                            >         for package in dep_value.get('packages', []):
-                            EOF
-                            fi
-              - step:
-                  type: Run
-                  name: step-depot-tools-add-to-path
-                  identifier: stepdepottoolsaddtopath
-                  spec:
-                    shell: Sh
-                    command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
-              - step:
-                  type: Run
-                  name: step-get-more-space-on-mac
-                  identifier: stepgetmorespaceonmac
-                  spec:
-                    shell: Sh
-                    command: |2-
-                            if [ "`uname`" == "Darwin" ]; then
-                              sudo mkdir -p $TMPDIR/del-target
-                              tmpify() {
-                                if [ -d "$1" ]; then
-                                  sudo mv "$1" $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
-                                fi
-                              }
-                              strip_arm_deep() {
-                                opwd=$(pwd)
-                                cd $1
-                                f=$(find . -perm +111 -type f)
-                                for fp in $f
-                                do
-                                  if [[ $(file "$fp") == *"universal binary"* ]]; then
-                                    if [[ $(file "$fp") == *"arm64e)"* ]]; then
-                                      sudo lipo -remove arm64e "$fp" -o "$fp" || true
-                                    fi
-                                    if [[ $(file "$fp") == *"arm64)"* ]]; then
-                                      sudo lipo -remove arm64 "$fp" -o "$fp" || true
-                                    fi
-                                  fi
-                                done
-                                cd $opwd
-                              }
-                              tmpify /Library/Developer/CoreSimulator
-                              tmpify ~/Library/Developer/CoreSimulator
-                              tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
-                              tmpify $(xcode-select -p)/Platforms/iPhoneOS.platform
-                              tmpify $(xcode-select -p)/Platforms/WatchOS.platform
-                              tmpify $(xcode-select -p)/Platforms/WatchSimulator.platform
-                              tmpify $(xcode-select -p)/Platforms/AppleTVSimulator.platform
-                              tmpify $(xcode-select -p)/Platforms/iPhoneSimulator.platform
-                              tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/metal/ios
-                              tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift
-                              tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0
-                              tmpify ~/.rubies
-                              tmpify ~/Library/Caches/Homebrew
-                              tmpify /usr/local/Homebrew
-                              sudo rm -rf $TMPDIR/del-target
-                              # sudo rm -rf "/System/Library/Desktop Pictures"
-                              # sudo rm -rf /System/Library/Templates/Data
-                              # sudo rm -rf /System/Library/Speech/Voices
-                              # sudo rm -rf "/System/Library/Screen Savers"
-                              # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs
-                              # sudo rm -rf "/System/Volumes/Data/Library/Application Support/Apple/Photos/Print Products"
-                              # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/
-                              # sudo rm -rf /System/Volumes/Data/Library/Java
-                              # sudo rm -rf /System/Volumes/Data/Library/Ruby
-                              # sudo rm -rf /System/Volumes/Data/Library/Printers
-                              # sudo rm -rf /System/iOSSupport
-                              # sudo rm -rf /System/Applications/*.app
-                              # sudo rm -rf /System/Applications/Utilities/*.app
-                              # sudo rm -rf /System/Library/LinguisticData
-                              # sudo rm -rf /System/Volumes/Data/private/var/db/dyld/*
-                              # sudo rm -rf /System/Library/Fonts/*
-                              # sudo rm -rf /System/Library/PreferencePanes
-                              # sudo rm -rf /System/Library/AssetsV2/*
-                              sudo rm -rf /Applications/Safari.app
-                              sudo rm -rf ~/project/src/build/linux
-                              sudo rm -rf ~/project/src/third_party/catapult/tracing/test_data
-                              sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
-                              # lipo off some huge binaries arm64 versions to save space
-                              strip_arm_deep $(xcode-select -p)/../SharedFrameworks
-                              # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
-                            fi
     - parallel:
         - stage:
             name: electron-tests
