@@ -28,7 +28,7 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Restore key specific artifacts
+                  name: restore_build_artifacts
                   identifier: Restore_key_specific_artifacts
                   spec:
                     shell: Sh
@@ -42,6 +42,39 @@ pipeline:
                       mv_if_exist hunspell_dictionaries.zip src/out/Default
                       mv_if_exist cross-arch-snapshots src
                   description: restore_build_artifacts
+              - step:
+                  type: Run
+                  name: step-depot-tools-add-to-path
+                  identifier: stepdepottoolsaddtopath
+                  spec:
+                    shell: Sh
+                    command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+              - step:
+                  type: Run
+                  name: step-electron-dist-unzip
+                  identifier: stepelectrondistunzip
+                  spec:
+                    shell: Sh
+                    command: |2
+                            cd src/out/Default
+                            # -o  overwrite files WITHOUT prompting
+                            # TODO(alexeykuzmin): Remove '-o' when it's no longer needed.
+                            # -: allows to extract archive members into  locations  outside
+                            #    of the current ``extraction root folder''.
+                            #    ASan builds have the llvm-symbolizer binaries listed as
+                            #    runtime_deps, with their paths as `../../third_party/...`
+                            #    unzip exits with non-zero code on such zip files unless -: is
+                            #    passed.
+                            unzip -:o dist.zip
+              - step:
+                  type: Run
+                  name: step-mksnapshot-unzip
+                  identifier: stepmksnapshotunzip
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd src/out/Default
+                      unzip -:o mksnapshot.zip
               - step:
                   type: Run
                   name: Electron tests
