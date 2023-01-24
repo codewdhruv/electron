@@ -50,3 +50,26 @@ pipeline:
                                   curl -g -H "Content-Type: application/json" -X POST \
                                   -d "{\"text\": \"$MESSAGE\", \"attachments\": [{\"color\": \"good\",\"title\": \"$CIRCLE_JOB nightly build results\",\"title_link\": \"$CIRCLE_BUILD_URL\"}]}" $SLACK_WEBHOOK
                                 fi
+              - step:
+                  type: Run
+                  name: Cleanup after testing
+                  identifier: Cleanup_after_testing
+                  spec:
+                    shell: Sh
+                    command: |2
+                            if  [ "$TARGET_ARCH" == "arm64" ] &&[ "`uname`" == "Darwin" ]; then
+                              killall Electron || echo "No Electron processes left running"
+                              killall Safari || echo "No Safari processes left running"
+                              rm -rf ~/Library/Application\ Support/Electron*
+                              rm -rf ~/Library/Application\ Support/electron*
+                              security delete-generic-password -l "Chromium Safe Storage" || echo "✓ Keychain does not contain password from tests"
+                              security delete-generic-password -l "Electron Test Main Safe Storage" || echo "✓ Keychain does not contain password from tests"
+                              security delete-generic-password -a "electron-test-safe-storage" || echo "✓ Keychain does not contain password from tests"
+                              security delete-generic-password -l "electron-test-safe-storage Safe Storage" || echo "✓ Keychain does not contain password from tests"
+                            elif [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
+                              XVFB=/usr/bin/Xvfb
+                              /sbin/start-stop-daemon --stop --exec $XVFB || echo "Xvfb not running"
+                              pkill electron || echo "electron not running"
+                              rm -rf ~/.config/Electron*
+                              rm -rf ~/.config/electron*
+                            fi
