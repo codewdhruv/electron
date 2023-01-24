@@ -418,13 +418,18 @@ pipeline:
                       fi
               - step:
                   type: Run
-                  name: Run Nan Tests
+                  name: Run Node Tests
                   identifier: Run_Nan_Tests
                   spec:
                     shell: Sh
                     command: |2-
                                   cd src
-                                  node electron/script/nan-spec-runner.js
+                                  node electron/script/node-spec-runner.js --default --jUnitDir=junit
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - src/junit
     - stage:
         name: Builds
         identifier: Builds
