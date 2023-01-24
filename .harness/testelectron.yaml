@@ -47,7 +47,7 @@ pipeline:
                   name: step-depot-tools-add-to-path
                   identifier: stepdepottoolsaddtopath
                   spec:
-                    shell: Sh
+                    shell: Bash
                     command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
                   when:
                     stageStatus: All
