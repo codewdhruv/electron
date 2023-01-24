@@ -1,0 +1,40 @@
+pipeline:
+  name: test-electron
+  identifier: testelectron
+  projectIdentifier: NgLabs
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: gitconnectordhruba
+        repoName: electron
+        build: <+input>
+  stages:
+    - stage:
+        name: Builds
+        identifier: Builds
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Pack config
+                  identifier: Pack_config
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd .circleci/config
+                      yarn
+                      export CIRCLECI_BINARY="$HOME/circleci"
+                      curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | DESTDIR=$CIRCLECI_BINARY bash
+                      node build.js
