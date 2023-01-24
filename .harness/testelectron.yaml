@@ -14,7 +14,6 @@ pipeline:
     - stage:
         name: electron-build
         identifier: electronbuild
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
@@ -28,11 +27,11 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Run_1
+                  name: attach_workspace
                   identifier: Run_1
                   spec:
                     shell: Sh
-                    command: ech0
+                    command: "at: ."
     - parallel:
         - stage:
             name: electron-tests
