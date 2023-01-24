@@ -12,7 +12,7 @@ pipeline:
         build: <+input>
   stages:
     - stage:
-        name: Electron Tests
+        name: electron-tests
         identifier: Electron_Tests
         description: ""
         type: CI
