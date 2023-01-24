@@ -89,3 +89,10 @@ pipeline:
                       # Remove swift-format dep from cipd on macOS until we send a patch upstream.
                       cd depot_tools
                       fi
+              - step:
+                  type: Run
+                  name: Add depot tools to PATH
+                  identifier: Add_depot_tools_to_PATH
+                  spec:
+                    shell: Sh
+                    command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
