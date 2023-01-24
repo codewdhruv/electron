@@ -215,3 +215,4 @@ pipeline:
       type: String
       description: ""
       value: "1"
+  allowStageExecutions: true
