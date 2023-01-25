@@ -367,6 +367,8 @@ pipeline:
                       when:
                         stageStatus: All
                       failureStrategies: []
+          sharedPaths:
+            - ./
     - parallel:
         - stage:
             name: electron-tests
