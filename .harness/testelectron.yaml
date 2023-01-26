@@ -371,7 +371,6 @@ pipeline:
         - stage:
             name: electron-tests
             identifier: Electron_Tests
-            description: ""
             type: CI
             spec:
               cloneCodebase: true
@@ -669,6 +668,8 @@ pipeline:
                       when:
                         stageStatus: All
                       failureStrategies: []
+              sharedPaths:
+                - src/electron
             when:
               pipelineStatus: All
         - stage:
