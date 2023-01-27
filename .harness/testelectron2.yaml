@@ -205,6 +205,9 @@ pipeline:
                               strip_arm_deep $(xcode-select -p)/../SharedFrameworks
                               # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
                             fi
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
                   when:
                     stageStatus: All
                   failureStrategies: []
