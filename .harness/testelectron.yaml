@@ -117,6 +117,9 @@ pipeline:
                             - /usr/local/Cellar/gnu-tar
                             - /usr/local/bin/gtar
                           archiveFormat: Tar
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
               - parallel:
                   - step:
                       type: Run
