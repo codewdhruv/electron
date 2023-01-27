@@ -208,6 +208,18 @@ pipeline:
                         when:
                           stageStatus: All
                         failureStrategies: []
+                    - step:
+                        type: Run
+                        name: Generate deps hash
+                        identifier: Generate_deps_hash
+                        spec:
+                          shell: Sh
+                          command: |-
+                            #!/bin/bash -eo pipefail
+                            node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
                   when:
                     stageStatus: All
                   failureStrategies: []
