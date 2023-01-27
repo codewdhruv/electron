@@ -29,7 +29,7 @@ pipeline:
                         name: Install gnu-tar on macos
                         identifier: Install_gnutar_on_macos
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: |-
                             #!/bin/bash -eo pipefail
                             if [ "`uname`" == "Darwin" ]; then
@@ -44,7 +44,7 @@ pipeline:
                         name: Install python2 on mac
                         identifier: Install_python2_on_mac
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: |
                             #!/bin/bash -eo pipefail
                             if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
@@ -92,7 +92,7 @@ pipeline:
                         name: Get depot tools
                         identifier: Get_depot_tools
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: |-
                             #!/bin/bash -eo pipefail
                             git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -119,7 +119,7 @@ pipeline:
                         name: Add depot tools to path
                         identifier: Add_depot_tools_to_path
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: |-
                             #!/bin/bash -eo pipefail
                             echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
@@ -131,7 +131,7 @@ pipeline:
                         name: Freeup space on MacOS
                         identifier: Freeup_space_on_MacOS
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: |-
                             #!/bin/bash -eo pipefail
                             if [ "`uname`" == "Darwin" ]; then
@@ -213,7 +213,7 @@ pipeline:
                         name: Generate deps hash
                         identifier: Generate_deps_hash
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
                         when:
                           stageStatus: All
@@ -223,7 +223,7 @@ pipeline:
                         name: Touch sync done
                         identifier: Touch_sync_done
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: |
                             touch src/electron/.circle-sync-done
                         when:
@@ -234,7 +234,7 @@ pipeline:
                         name: Prepare for cross OS sync restore
                         identifier: Prepare_for_cross_OS_sync_restore
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: |-
                             sudo mkdir -p /var/portal
                             sudo chown -R $(id -u):$(id -g) /var/portal
@@ -258,7 +258,7 @@ pipeline:
                         name: Halt the job early if the src cache exists
                         identifier: Halt_the_job_early_if_the_src_cache_exists
                         spec:
-                          shell: Sh
+                          shell: Bash
                           command: |2-
                                               if [ -f ".src-cache-marker" ]; then
                                                 circleci-agent step halt
@@ -275,6 +275,14 @@ pipeline:
             type: String
             description: ""
             value: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+          - name: NUMBER_OF_NINJA_PROCESSES
+            type: String
+            description: ""
+            value: "34"
+          - name: ELECTRON_OUT_DIR
+            type: String
+            description: ""
+            value: Default
     - stage:
         name: build-mac
         identifier: buildmac
