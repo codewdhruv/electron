@@ -413,6 +413,9 @@ pipeline:
                           node script/yarn webpack --config $f --output-filename=$out --output-path=./.tmp --env mode=development
                         fi
                       done
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
   properties:
     ci:
       codebase:
