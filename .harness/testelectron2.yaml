@@ -726,6 +726,8 @@ pipeline:
                   when:
                     stageStatus: All
                   failureStrategies: []
+        when:
+          pipelineStatus: All
   properties:
     ci:
       codebase:
