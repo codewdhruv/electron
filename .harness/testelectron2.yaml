@@ -704,7 +704,7 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |-
-                      cd src/electron
+                      cd ./src/electron
                       node script/yarn install --frozen-lockfile
               - step:
                   type: Run
