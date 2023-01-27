@@ -228,7 +228,7 @@ pipeline:
                         spec:
                           shell: Bash
                           command: |
-                            touch src/electron/.circle-sync-done
+                            touch .circle-sync-done
                         when:
                           stageStatus: All
                         failureStrategies: []
