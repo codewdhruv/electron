@@ -372,6 +372,47 @@ pipeline:
                   failureStrategies: []
         when:
           pipelineStatus: All
+    - stage:
+        name: docs-only
+        identifier: docsonly
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Install node modules
+                  identifier: Install_node_modules
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd src/electron
+                      node script/yarn install --frozen-lockfile
+              - step:
+                  type: Run
+                  name: Run TS and JS compile on doc only change
+                  identifier: Run_TS_and_JS_compile_on_doc_only_change
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd src/electron
+                      node script/yarn create-typescript-definitions
+                      node script/yarn tsc -p tsconfig.default_app.json --noEmit
+                      for f in build/webpack/*.js
+                      do
+                        out="${f:29}"
+                        if [ "$out" != "base.js" ]; then
+                          node script/yarn webpack --config $f --output-filename=$out --output-path=./.tmp --env mode=development
+                        fi
+                      done
   properties:
     ci:
       codebase:
