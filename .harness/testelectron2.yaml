@@ -122,7 +122,7 @@ pipeline:
                           shell: Bash
                           command: |-
                             #!/bin/bash -eo pipefail
-                            echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+                            echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
                         when:
                           stageStatus: All
                         failureStrategies: []
