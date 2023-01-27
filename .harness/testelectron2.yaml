@@ -1,0 +1,56 @@
+pipeline:
+  name: test-electron2
+  identifier: testelectron2
+  projectIdentifier: NgLabs
+  orgIdentifier: default
+  tags: {}
+  stages:
+    - stage:
+        name: linux-make-src-cache
+        identifier: linuxmakesrccache
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - stepGroup:
+                  name: electron-build
+                  identifier: electronbuild
+                  steps:
+                    - step:
+                        type: Run
+                        name: Install gnu-tar on macos
+                        identifier: Install_gnutar_on_macos
+                        spec:
+                          shell: Sh
+                          command: |-
+                            #!/bin/bash -eo pipefail
+                            if [ "`uname`" == "Darwin" ]; then
+                              if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
+                                brew update
+                                brew install gnu-tar
+                              fi
+                              ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                            fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+                  spec: {}
+        variables:
+          - name: GCLIENT_EXTRA_ARGS
+            type: String
+            description: ""
+            value: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+  properties:
+    ci:
+      codebase:
+        connectorRef: gitconnectordhruba
+        repoName: electron
+        build: <+input>
