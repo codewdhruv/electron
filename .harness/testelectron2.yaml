@@ -275,6 +275,103 @@ pipeline:
             type: String
             description: ""
             value: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+    - stage:
+        name: lint
+        identifier: lint
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Setup third party depot tools
+                  identifier: Setup_third_party_depot_tools
+                  spec:
+                    shell: Sh
+                    command: |-
+                      # "depot_tools" has to be checkout into "//third_party/depot_tools" so pylint.py can a "pylintrc" file.
+                      git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git src/third_party/depot_tools
+                      echo 'export PATH="$PATH:'"$PWD"'/src/third_party/depot_tools"' >> $BASH_ENV
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Download GN Binary
+                  identifier: Download_GN_Binary
+                  spec:
+                    shell: Sh
+                    command: |-
+                      chromium_revision="$(grep -A1 chromium_version src/electron/DEPS | tr -d '\n' | cut -d\' -f4)"
+                      gn_version="$(curl -sL "https://chromium.googlesource.com/chromium/src/+/${chromium_revision}/DEPS?format=TEXT" | base64 -d | grep gn_version | head -n1 | cut -d\' -f4)"
+
+                      cipd ensure -ensure-file - -root . <<-CIPD
+                      \$ServiceURL https://chrome-infra-packages.appspot.com/
+                      @Subdir src/buildtools/linux64
+                      gn/gn/linux-amd64 $gn_version
+                      CIPD
+
+                      echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' >> $BASH_ENV
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Download clang format binary
+                  identifier: Download_clang_format_binary
+                  spec:
+                    shell: Sh
+                    command: |-
+                      chromium_revision="$(grep -A1 chromium_version src/electron/DEPS | tr -d '\n' | cut -d\' -f4)"
+
+                      sha1_path='buildtools/linux64/clang-format.sha1'
+                      curl -sL "https://chromium.googlesource.com/chromium/src/+/${chromium_revision}/${sha1_path}?format=TEXT" | base64 -d > "src/${sha1_path}"
+
+                      download_from_google_storage.py --no_resume --no_auth --bucket chromium-clang-format -s "src/${sha1_path}"
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run lint
+                  identifier: Run_lint
+                  spec:
+                    shell: Sh
+                    command: |-
+                      # gn.py tries to find a gclient root folder starting from the current dir.
+                      # When it fails and returns "None" path, the whole script fails. Let's "fix" it.
+                      touch .gclient
+                      # Another option would be to checkout "buildtools" inside the Electron checkout,
+                      # but then we would lint its contents (at least gn format), and it doesn't pass it.
+
+                      cd src/electron
+                      node script/yarn install --frozen-lockfile
+                      node script/yarn lint
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run script type checker
+                  identifier: Run_script_type_checker
+                  spec:
+                    shell: Sh
+                    command: |-
+                      cd src/electron
+                      node script/yarn tsc -p tsconfig.script.json
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+        when:
+          pipelineStatus: All
   properties:
     ci:
       codebase:
