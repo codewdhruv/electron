@@ -218,6 +218,54 @@ pipeline:
                         when:
                           stageStatus: All
                         failureStrategies: []
+                    - step:
+                        type: Run
+                        name: Touch sync done
+                        identifier: Touch_sync_done
+                        spec:
+                          shell: Sh
+                          command: |
+                            touch src/electron/.circle-sync-done
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
+                    - step:
+                        type: Run
+                        name: Prepare for cross OS sync restore
+                        identifier: Prepare_for_cross_OS_sync_restore
+                        spec:
+                          shell: Sh
+                          command: |-
+                            sudo mkdir -p /var/portal
+                            sudo chown -R $(id -u):$(id -g) /var/portal
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
+                    - step:
+                        type: RestoreCacheGCS
+                        name: Restoring src cache marker
+                        identifier: Restoring_src_cache_marker
+                        spec:
+                          connectorRef: gcpdhruba
+                          bucket: test-electron
+                          key: v16-src-cache-marker-{{ checksum "src/electron/.depshash" }}
+                          archiveFormat: Tar
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
+                    - step:
+                        type: Run
+                        name: Halt the job early if the src cache exists
+                        identifier: Halt_the_job_early_if_the_src_cache_exists
+                        spec:
+                          shell: Sh
+                          command: |2-
+                                              if [ -f ".src-cache-marker" ]; then
+                                                circleci-agent step halt
+                                              fi
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
                   when:
                     stageStatus: All
                   failureStrategies: []
