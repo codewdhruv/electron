@@ -124,7 +124,7 @@ pipeline:
                             #!/bin/bash -eo pipefail
                             echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
                             export PATH="$PATH:/harness/depot_tools"
-                            echo $PATH
+                            echo $PATH >> $BASH_ENV
                         when:
                           stageStatus: All
                         failureStrategies: []
