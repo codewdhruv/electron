@@ -304,6 +304,9 @@ pipeline:
                         fi
                         ln -fs /usr/local/bin/gtar /usr/local/bin/tar
                       fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: RestoreCacheGCS
                   name: Restore python cache
@@ -313,6 +316,9 @@ pipeline:
                     bucket: test-electron
                     key: v2.7.18-python-cache-{{ arch }}
                     archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Install python2 on macOs
@@ -331,6 +337,9 @@ pipeline:
                         fi
                         sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
                       fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: SaveCacheGCS
                   name: Persisting python cache
@@ -342,6 +351,9 @@ pipeline:
                     sourcePaths:
                       - python-downloads
                     archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: SaveCacheGCS
                   name: Persisting brew cache
@@ -354,6 +366,9 @@ pipeline:
                       - /usr/local/Cellar/gnu-tar
                       - /usr/local/bin/gtar
                     archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Get depot tools
@@ -377,6 +392,9 @@ pipeline:
                       >         for package in dep_value.get('packages', []):
                       EOF
                       fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Add depot tools to path
@@ -385,6 +403,9 @@ pipeline:
                     shell: Sh
                     command: |
                       echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Free up space on MacOS
@@ -463,6 +484,9 @@ pipeline:
                         strip_arm_deep $(xcode-select -p)/../SharedFrameworks
                         # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
                       fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Generate deps hash
@@ -471,6 +495,9 @@ pipeline:
                     shell: Sh
                     command: |
                       node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Touch sync done
@@ -479,6 +506,9 @@ pipeline:
                     shell: Sh
                     command: |
                       touch src/electron/.circle-sync-done
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Prepare for cross OS sync restore
@@ -488,6 +518,9 @@ pipeline:
                     command: |-
                       sudo mkdir -p /var/portal
                       sudo chown -R $(id -u):$(id -g) /var/portal
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: RestoreCacheGCS
                   name: Restoring src cache marker
@@ -497,6 +530,9 @@ pipeline:
                     bucket: test-electron
                     key: v16-src-cache-marker-{{ checksum "src/electron/.depshash" }}
                     archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Halt the job early if the src cache exists
@@ -507,6 +543,9 @@ pipeline:
                       if [ -f ".src-cache-marker" ]; then
                         circleci-agent step halt
                       fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: RestoreCacheGCS
                   name: Restoring src cache
@@ -516,6 +555,9 @@ pipeline:
                     bucket: test-electron
                     key: v16-src-cache-{{ checksum "src/electron/.depshash" }}
                     archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Fix the src cache restore point on macOS
@@ -528,6 +570,9 @@ pipeline:
                         rm -rf src
                         mv /var/portal/src ./
                       fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
               - step:
                   type: Run
                   name: Set GIT_CACHE_PATH to make gclient to use the cache
@@ -535,6 +580,9 @@ pipeline:
                   spec:
                     shell: Sh
                     command: echo 'export GIT_CACHE_PATH="$PWD/git-cache"' >> $BASH_ENV
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
     - stage:
         name: lint
         identifier: lint
