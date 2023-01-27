@@ -419,3 +419,4 @@ pipeline:
         connectorRef: gitconnectordhruba
         repoName: electron
         build: <+input>
+  allowStageExecutions: true
