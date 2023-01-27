@@ -214,9 +214,7 @@ pipeline:
                         identifier: Generate_deps_hash
                         spec:
                           shell: Sh
-                          command: |-
-                            #!/bin/bash -eo pipefail
-                            node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
+                          command: node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
                         when:
                           stageStatus: All
                         failureStrategies: []
