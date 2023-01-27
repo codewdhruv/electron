@@ -383,6 +383,18 @@ pipeline:
               execution:
                 steps:
                   - step:
+                      type: SaveCacheGCS
+                      name: save-cache
+                      identifier: savecache
+                      spec:
+                        connectorRef: gcpdhruba
+                        bucket: test-electron
+                        key: v5-brew-cache-{{ arch }}
+                        sourcePaths:
+                          - /usr/local/Cellar/gnu-tar
+                          - /usr/local/bin/gtar
+                        archiveFormat: Tar
+                  - step:
                       type: Run
                       name: restore_build_artifacts
                       identifier: Restore_key_specific_artifacts
