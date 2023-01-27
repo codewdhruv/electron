@@ -114,6 +114,18 @@ pipeline:
                         when:
                           stageStatus: All
                         failureStrategies: []
+                    - step:
+                        type: Run
+                        name: Add depot tools to path
+                        identifier: Add_depot_tools_to_path
+                        spec:
+                          shell: Sh
+                          command: |-
+                            #!/bin/bash -eo pipefail
+                            echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
                   when:
                     stageStatus: All
                   failureStrategies: []
