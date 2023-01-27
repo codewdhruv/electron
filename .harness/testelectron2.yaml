@@ -58,6 +58,17 @@ pipeline:
                               fi
                               sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
                             fi
+                    - step:
+                        type: SaveCacheGCS
+                        name: Persisting python cache
+                        identifier: Persisting_python_cache
+                        spec:
+                          connectorRef: gcpdhruba
+                          bucket: test-electron
+                          key: v2.7.18-python-cache-{{ arch }}
+                          sourcePaths:
+                            - python-downloads
+                          archiveFormat: Tar
                   when:
                     stageStatus: All
                   failureStrategies: []
