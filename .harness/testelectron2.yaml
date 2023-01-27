@@ -69,6 +69,9 @@ pipeline:
                           sourcePaths:
                             - python-downloads
                           archiveFormat: Tar
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
                     - step:
                         type: SaveCacheGCS
                         name: Persisting brew cache
@@ -81,6 +84,9 @@ pipeline:
                             - /usr/local/Cellar/gnu-tar
                             - /usr/local/bin/gtar
                           archiveFormat: Tar
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
                     - step:
                         type: Run
                         name: Get depot tools
@@ -105,6 +111,9 @@ pipeline:
                             >         for package in dep_value.get('packages', []):
                             EOF
                             fi
+                        when:
+                          stageStatus: All
+                        failureStrategies: []
                   when:
                     stageStatus: All
                   failureStrategies: []
