@@ -594,7 +594,11 @@ pipeline:
                   identifier: Set_GIT_CACHE_PATH_to_make_gclient_to_use_the_cache
                   spec:
                     shell: Sh
-                    command: "echo 'export GIT_CACHE_PATH=\"$PWD/git-cache\"' "
+                    command: |-
+                      echo 'export GIT_CACHE_PATH="$PWD/git-cache"' 
+                      export GIT_CACHE_PATH="$PWD/git-cache"
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
                   when:
                     stageStatus: All
                   failureStrategies: []
