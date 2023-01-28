@@ -664,17 +664,11 @@ pipeline:
                   identifier: Download_GN_Binary
                   spec:
                     shell: Sh
-                    command: |-
+                    command: |
+                      #!/bin/bash
                       chromium_revision="$(grep -A1 chromium_version src/electron/DEPS | tr -d '\n' | cut -d\' -f4)"
                       gn_version="$(curl -sL "https://chromium.googlesource.com/chromium/src/+/${chromium_revision}/DEPS?format=TEXT" | base64 -d | grep gn_version | head -n1 | cut -d\' -f4)"
-
-                      cipd ensure -ensure-file - -root . <<-CIPD
-                      \$ServiceURL https://chrome-infra-packages.appspot.com/
-                      @Subdir src/buildtools/linux64
-                      gn/gn/linux-amd64 $gn_version
-                      CIPD
-
-                      echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                      cipd ensure -ensure-file - -root . &#8203;`oaicite:{"index":0,"invalid_reason":"Malformed citation <<-CIPD\n\\$ServiceURL https://chrome-infra-packages.appspot.com/\n@Subdir src/buildtools/linux64\ngn/gn/linux-amd64 $gn_version\nCIPD\necho 'export CHROMIUM_BUILDTOOLS_PATH=\"'\"$PWD\"'/src/buildtools\"' >>"}`&#8203; $BASH_ENV
                   when:
                     stageStatus: All
                   failureStrategies: []
