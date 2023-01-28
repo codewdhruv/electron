@@ -707,7 +707,6 @@ pipeline:
                       # Another option would be to checkout "buildtools" inside the Electron checkout,
                       # but then we would lint its contents (at least gn format), and it doesn't pass it.
 
-                      cd src/electron
                       node script/yarn install --frozen-lockfile
                       node script/yarn lint
                   when:
@@ -719,9 +718,7 @@ pipeline:
                   identifier: Run_script_type_checker
                   spec:
                     shell: Sh
-                    command: |-
-                      cd src/electron
-                      node script/yarn tsc -p tsconfig.script.json
+                    command: node script/yarn tsc -p tsconfig.script.json
                   when:
                     stageStatus: All
                   failureStrategies: []
