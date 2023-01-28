@@ -629,6 +629,9 @@ pipeline:
                       # "depot_tools" has to be checkout into "//third_party/depot_tools" so pylint.py can a "pylintrc" file.
                       git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git src/third_party/depot_tools
                       echo 'export PATH="$PATH:'"$PWD"'/src/third_party/depot_tools"' 
+                      export PATH="$PATH:/harness/src/third_party/depot_tools"
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
                   when:
                     stageStatus: All
                   failureStrategies: []
@@ -648,7 +651,7 @@ pipeline:
                       gn/gn/linux-amd64 $gn_version
                       CIPD
 
-                      echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' >> $BASH_ENV
+                      echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
                   when:
                     stageStatus: All
                   failureStrategies: []
