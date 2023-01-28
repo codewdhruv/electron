@@ -607,7 +607,6 @@ pipeline:
     - stage:
         name: lint
         identifier: lint
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
@@ -727,6 +726,8 @@ pipeline:
                   when:
                     stageStatus: All
                   failureStrategies: []
+          sharedPaths:
+            - src/electron
         when:
           pipelineStatus: All
     - stage:
