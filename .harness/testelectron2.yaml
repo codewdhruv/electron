@@ -306,7 +306,7 @@ pipeline:
                   name: Install gnu-tar on macos
                   identifier: Install_gnutar_on_macos
                   spec:
-                    shell: Sh
+                    shell: Bash
                     command: |-
                       if [ "`uname`" == "Darwin" ]; then
                         if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
@@ -412,8 +412,12 @@ pipeline:
                   identifier: Add_depot_tools_to_path
                   spec:
                     shell: Sh
-                    command: |
-                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"' >> $BASH_ENV
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                      export PATH="$PATH:/harness/depot_tools"
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
                   when:
                     stageStatus: All
                   failureStrategies: []
@@ -505,7 +509,7 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |
-                      node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
+                      node script/generate-deps-hash.js && cat .depshash-target
                   when:
                     stageStatus: All
                   failureStrategies: []
@@ -516,7 +520,7 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |
-                      touch src/electron/.circle-sync-done
+                      touch .circle-sync-done
                   when:
                     stageStatus: All
                   failureStrategies: []
