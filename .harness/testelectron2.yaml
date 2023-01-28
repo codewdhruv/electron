@@ -637,6 +637,13 @@ pipeline:
                   failureStrategies: []
               - step:
                   type: Run
+                  name: test run
+                  identifier: test_run
+                  spec:
+                    shell: Sh
+                    command: cipd ensure -ensure-file - -root .
+              - step:
+                  type: Run
                   name: Download GN Binary
                   identifier: Download_GN_Binary
                   spec:
