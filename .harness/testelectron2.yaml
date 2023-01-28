@@ -641,7 +641,11 @@ pipeline:
                   identifier: test_run
                   spec:
                     shell: Sh
-                    command: cipd ensure -ensure-file - -root .
+                    command: |-
+                      chromium_revision="$(grep -A1 chromium_version src/electron/DEPS | tr -d '\n' | cut -d\' -f4)"
+                      gn_version="$(curl -sL "https://chromium.googlesource.com/chromium/src/+/${chromium_revision}/DEPS?format=TEXT" | base64 -d | grep gn_version | head -n1 | cut -d\' -f4)"
+
+                      cipd ensure -ensure-file - -root .
               - step:
                   type: Run
                   name: Download GN Binary
