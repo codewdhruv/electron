@@ -727,7 +727,7 @@ pipeline:
                     stageStatus: All
                   failureStrategies: []
           sharedPaths:
-            - src/electron
+            - src/electron/
         when:
           pipelineStatus: All
     - stage:
