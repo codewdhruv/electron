@@ -741,9 +741,7 @@ pipeline:
                   identifier: Install_node_modules
                   spec:
                     shell: Sh
-                    command: |-
-                      cd src/electron
-                      node script/yarn install --frozen-lockfile
+                    command: node script/yarn install --frozen-lockfile
               - step:
                   type: Run
                   name: Run TS and JS compile on doc only change
@@ -751,7 +749,6 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |-
-                      cd src/electron
                       node script/yarn create-typescript-definitions
                       node script/yarn tsc -p tsconfig.default_app.json --noEmit
                       for f in build/webpack/*.js
