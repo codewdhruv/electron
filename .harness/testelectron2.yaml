@@ -289,7 +289,6 @@ pipeline:
     - stage:
         name: build-mac
         identifier: buildmac
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
@@ -723,7 +722,6 @@ pipeline:
     - stage:
         name: docs-only
         identifier: docsonly
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
@@ -761,6 +759,8 @@ pipeline:
                   when:
                     stageStatus: All
                   failureStrategies: []
+          sharedPaths:
+            - /src/electron
         when:
           pipelineStatus: All
   properties:
