@@ -747,14 +747,17 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |-
+                      #!/bin/sh
+
                       node script/yarn create-typescript-definitions
                       node script/yarn tsc -p tsconfig.default_app.json --noEmit
+
                       for f in build/webpack/*.js
                       do
-                        out="${f:29}"
-                        if [ "$out" != "base.js" ]; then
-                          node script/yarn webpack --config $f --output-filename=$out --output-path=./.tmp --env mode=development
-                        fi
+                      out="${f:29}"
+                      if [ "$out" != "base.js" ]; then
+                      node script/yarn webpack --config $f --output-filename=$out --output-path=./.tmp --env mode=development
+                      fi
                       done
                   when:
                     stageStatus: All
