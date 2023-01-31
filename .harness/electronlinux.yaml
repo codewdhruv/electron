@@ -391,6 +391,14 @@ pipeline:
                       if [ ! -z "$RAW_GOMA_AUTH" ]; then
                         echo $RAW_GOMA_AUTH > ~/.goma_oauth2_config
                       fi
+
+                      git clone https://github.com/electron/build-tools.git
+                      cd build-tools
+                      npm install
+                      mkdir third_party
+                      node -e "require('./src/utils/goma.js').downloadAndPrepare({ gomaOneForAll: true })"
+                      export GOMA_FALLBACK_ON_AUTH_FAILURE=true
+                      third_party/goma/goma_ctl.py ensure_start
                   when:
                     stageStatus: All
                   failureStrategies: []
