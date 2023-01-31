@@ -12,6 +12,28 @@ pipeline:
         build: <+input>
   stages:
     - stage:
+        name: teststg
+        identifier: teststg
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Run_1
+                  identifier: Run_1
+                  spec:
+                    shell: Sh
+                    command: sudo
+    - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
         type: CI
