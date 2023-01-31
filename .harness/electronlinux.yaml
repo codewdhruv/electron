@@ -35,6 +35,9 @@ pipeline:
                     command: |-
                       echo "dhruba ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/dhruba
                       sudo mkdir python-downloads
+                      echo 'Downloading Python 2.7.18'
+                      curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                      mv python-2.7.18-macosx10.9.pkg python-downloads
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
