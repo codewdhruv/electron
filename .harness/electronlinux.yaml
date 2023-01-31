@@ -41,6 +41,11 @@ pipeline:
                                 brew update
                                 brew install gnu-tar
                               ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                          envVariables:
+                            IS_ELECTRON_RUNNER: "1"
+                            ELECTRON_OUT_DIR: Default
+                            NUMBER_OF_NINJA_PROCESSES: "34"
+                            GCLIENT_EXTRA_ARGS: "--custom-var=checkout_arm=True --custom-var=checkout_arm64=True"
                     - step:
                         type: Run
                         name: Install python2 on mac
