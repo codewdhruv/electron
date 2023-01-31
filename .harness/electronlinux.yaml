@@ -380,8 +380,11 @@ pipeline:
                       #!/bin/sh
 
                       echo 'export NUMBER_OF_NINJA_PROCESSES=300' 
+                      export GOMA_FALLBACK_ON_AUTH_FAILURE=true
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
                       if [ "`uname`" = "Darwin" ]; then
-                        echo 'ulimit -n 10000' >> $BASH_ENV
+                        echo 'ulimit -n 10000'
                         echo 'sudo launchctl limit maxfiles 65536 200000' >> $BASH_ENV
                       fi
                       if [ ! -z "$RAW_GOMA_AUTH" ]; then
