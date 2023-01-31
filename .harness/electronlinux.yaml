@@ -406,7 +406,9 @@ pipeline:
                       fi
 
                       echo 'export GN_GOMA_FILE='`node -e "console.log(require('./src/utils/goma.js').gnFilePath)"` 
-
+                      export GN_GOMA_FILE=/harness/build-tools/third_party/goma.gn
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
 
                   when:
                     stageStatus: All
