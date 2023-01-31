@@ -56,6 +56,8 @@ pipeline:
                         name: Install python2 on mac
                         identifier: Install_python2_on_mac
                         spec:
+                          connectorRef: harnessdocker
+                          image: curlimages/curl:7.87.0
                           shell: Sh
                           command: |
                             #!/bin/bash -eo pipefail
