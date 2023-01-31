@@ -31,8 +31,6 @@ pipeline:
                   name: Run_1
                   identifier: Run_1
                   spec:
-                    connectorRef: harnessdocker
-                    image: curlimages/curl:7.87.0
                     shell: Sh
                     command: |-
                       echo "dhruba ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/dhruba
