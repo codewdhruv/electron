@@ -67,14 +67,6 @@ pipeline:
                           envVariables:
                             IS_ELECTRON_RUNNER: "1"
                     - step:
-                        type: Run
-                        name: Run_10
-                        identifier: Run_10
-                        spec:
-                          shell: Sh
-                          command: |
-                            pax> uname -s
-                    - step:
                         type: SaveCacheGCS
                         name: Persisting python cache
                         identifier: Persisting_python_cache
