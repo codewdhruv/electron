@@ -35,13 +35,11 @@ pipeline:
                         name: Install gnu-tar on macos
                         identifier: Install_gnutar_on_macos
                         spec:
+                          connectorRef: harnessdocker
+                          image: ubuntu:latest
                           shell: Bash
                           command: |
                             #!/bin/bash -eo pipefail
-
-                            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)" && echo 'export PATH="/usr/local/bin:$PATH"' >> ~/BASH_ENV
-
-
 
                             brew update
                             brew install gnu-tar
