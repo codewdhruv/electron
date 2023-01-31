@@ -66,6 +66,8 @@ pipeline:
                             fi
 
                             tree -L 2 /
+                          envVariables:
+                            IS_ELECTRON_RUNNER: "1"
                     - step:
                         type: SaveCacheGCS
                         name: Persisting python cache
