@@ -428,15 +428,135 @@ pipeline:
                   failureStrategies: []
               - step:
                   type: Run
-                  name: Run_4
+                  name: Get depot tools
                   identifier: Run_4
                   spec:
                     shell: Sh
                     command: |-
-                      echo 'export LOCAL_GOMA_DIR='`node -e "console.log(require('./src/utils/goma.js').dir)"` >> $BASH_ENV
-                      echo 'export GOMA_FALLBACK_ON_AUTH_FAILURE=true' >> $BASH_ENV
-                      cd ..
-                      touch "${TMPDIR:=/tmp}"/.goma-ready
+                      #!/bin/bash -eo pipefail
+                      git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+                      if [ "`uname`" == "Darwin" ]; then
+                        # remove ninjalog_uploader_wrapper.py from autoninja since we don't use it and it causes problems
+                        sed -i '' '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                      else
+                        sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                        # Remove swift-format dep from cipd on macOS until we send a patch upstream.
+                        cd depot_tools
+                        patch gclient.py -R <<'EOF'
+                      676,677c676
+                      <         packages = dep_value.get('packages', [])
+                      <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
+                      ---
+                      >         for package in dep_value.get('packages', []):
+                      EOF
+                      fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Add depot tools to path
+                  identifier: Add_depot_tools_to_path
+                  spec:
+                    shell: Sh
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                      export PATH="$PATH:/harness/depot_tools"
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Generate deps hash
+                  identifier: Generate_deps_hash
+                  spec:
+                    shell: Sh
+                    command: node script/generate-deps-hash.js && cat .depshash-target
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Prepare for cross OS sync restore
+                  identifier: Prepare_for_cross_OS_sync_restore
+                  spec:
+                    shell: Sh
+                    command: |-
+                      sudo mkdir -p /var/portal
+                      sudo chown -R $(id -u):$(id -g) /var/portal
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: RestoreCacheGCS
+                  name: Restoring cache from src
+                  identifier: Restoring_cache_from_src
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v16-src-cache-{{ checksum "src/electron/.depshash" }}
+                    archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Fix the src cache restore point on mac
+                  identifier: Fix_the_src_cache_restore_point_on_mac
+                  spec:
+                    shell: Sh
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      if [ -d "/var/portal/src" ]; then
+                        echo Relocating Cache
+                        rm -rf src
+                        mv /var/portal/src ./
+                      fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Ensure src checkout worked
+                  identifier: Ensure_src_checkout_worked
+                  spec:
+                    shell: Sh
+                    command: |
+                      #!/bin/bash -eo pipefail
+                      if [ ! -d "src/third_party/blink" ]; then
+                        echo src cache was not restored for some reason, idk what happened here...
+                        exit 1
+                      fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Wipe electron
+                  identifier: Wipe_electron
+                  spec:
+                    shell: Sh
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      rm -rf src/electron
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run electron only hooks
+                  identifier: Run_electron_only_hooks
+                  spec:
+                    shell: Sh
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      gclient runhooks --spec="solutions=[{'name':'src/electron','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
         when:
           pipelineStatus: All
   allowStageExecutions: true
