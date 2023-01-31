@@ -536,13 +536,11 @@ pipeline:
                   identifier: Run_electron_only_hooks
                   spec:
                     shell: Sh
-                    command: |-
-                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                      export PATH="$PATH:/harness/depot_tools"
-                      echo $BASH_ENV
-                      export BASH_ENV=$PATH
+                    command: |
+                      export PATH=$PATH:/harness/depot_tools
+                      export BASH_ENV=$BASH_ENV:/harness/depot_tools
 
-                      gclient runhooks --spec="solutions=[{'name':'','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
+                      gclient runhooks --spec=solutions=[{'name':'','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]
                   when:
                     stageStatus: All
                   failureStrategies: []
