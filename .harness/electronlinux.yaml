@@ -38,6 +38,17 @@ pipeline:
                       echo 'Downloading Python 2.7.18'
                       curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
                       mv python-2.7.18-macosx10.9.pkg python-downloads
+              - step:
+                  type: SaveCacheGCS
+                  name: Restore python cache
+                  identifier: Restore_python_cache
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v2.7.18-python-cache-{{ arch }}
+                    sourcePaths:
+                      - python-downloads
+                    archiveFormat: Tar
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
