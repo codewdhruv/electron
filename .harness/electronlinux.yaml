@@ -64,10 +64,16 @@ pipeline:
                               fi
                               sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
                             fi
-
-                            tree -L 2 /
                           envVariables:
                             IS_ELECTRON_RUNNER: "1"
+                    - step:
+                        type: Run
+                        name: Run_10
+                        identifier: Run_10
+                        spec:
+                          shell: Sh
+                          command: |
+                            pax> uname -s
                     - step:
                         type: SaveCacheGCS
                         name: Persisting python cache
