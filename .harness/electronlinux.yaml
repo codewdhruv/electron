@@ -77,6 +77,31 @@ pipeline:
                   when:
                     stageStatus: All
                   failureStrategies: []
+              - step:
+                  type: Run
+                  name: add deps
+                  identifier: add_deps
+                  spec:
+                    shell: Sh
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                      export PATH="$PATH:/harness/depot_tools"
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: free space
+                  identifier: free_space
+                  spec:
+                    shell: Sh
+                    command: sudo mkdir -p $TMPDIR/del-target
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
