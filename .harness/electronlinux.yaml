@@ -35,7 +35,7 @@ pipeline:
                         identifier: Install_gnutar_on_macos
                         spec:
                           connectorRef: harnessdocker
-                          image: ubuntu:latest
+                          image: curlimages/curl:7.87.0
                           shell: Bash
                           command: |
                             #!/bin/bash -eo pipefail
