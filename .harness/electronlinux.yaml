@@ -37,10 +37,15 @@ pipeline:
                           connectorRef: harnessdocker
                           image: curlimages/curl:7.87.0
                           shell: Sh
-                          command: |-
+                          command: |
                             #!/bin/bash -eo pipefail
+                            if [ "`uname`" == "Darwin" ]; then
+                              if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
                                 brew update
                                 brew install gnu-tar
+                              fi
+                              ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                            fi
                           envVariables:
                             IS_ELECTRON_RUNNER: "1"
                             ELECTRON_OUT_DIR: Default
