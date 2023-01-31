@@ -410,6 +410,8 @@ pipeline:
                       echo $BASH_ENV
                       export BASH_ENV=$GN_GOMA_FILE
 
+                      echo 'export LOCAL_GOMA_DIR='`node -e "console.log(require('./src/utils/goma.js').dir)"` 
+
                   when:
                     stageStatus: All
                   failureStrategies: []
