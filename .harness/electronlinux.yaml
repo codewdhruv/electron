@@ -66,6 +66,8 @@ pipeline:
                       git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
                       ls
                       sed -i '/ninjalog_uploader_wrapper.py/d' depot_tools/autoninja
+                      cd depot_tools
+                      patch gclient.py -R <<'EOF'
                   when:
                     stageStatus: All
                   failureStrategies: []
