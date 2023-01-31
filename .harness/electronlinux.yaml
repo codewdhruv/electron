@@ -547,22 +547,15 @@ pipeline:
                   failureStrategies: []
               - step:
                   type: Run
-                  name: check gclient
-                  identifier: check_gclient
-                  spec:
-                    shell: Sh
-                    command: which gclient
-                  when:
-                    stageStatus: All
-                  failureStrategies: []
-              - step:
-                  type: Run
                   name: Run electron only hooks
                   identifier: Run_electron_only_hooks
                   spec:
                     shell: Sh
                     command: |-
-                      export PATH=$PATH:/path/to/depot_tools
+                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                      export PATH="$PATH:/harness/depot_tools"
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
 
                       gclient runhooks --spec="solutions=[{'name':'','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
                   when:
