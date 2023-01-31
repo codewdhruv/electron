@@ -37,9 +37,10 @@ pipeline:
                           connectorRef: harnessdocker
                           image: curlimages/curl:7.87.0
                           shell: Sh
-                          command: |
+                          command: |-
                             #!/bin/bash -eo pipefail
-                            curl -L https://github.com/Homebrew/brew/tarball/master -o homebrew.tar.gz
+                                brew update
+                                brew install gnu-tar
                           envVariables:
                             IS_ELECTRON_RUNNER: "1"
                             ELECTRON_OUT_DIR: Default
