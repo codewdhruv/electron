@@ -50,7 +50,7 @@ pipeline:
                         name: Install python2 on mac
                         identifier: Install_python2_on_mac
                         spec:
-                          shell: Bash
+                          shell: Sh
                           command: |
                             #!/bin/bash -eo pipefail
                             mkdir python-downloads
