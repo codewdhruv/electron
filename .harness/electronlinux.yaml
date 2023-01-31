@@ -420,6 +420,9 @@ pipeline:
                       echo $BASH_ENV
                       export BASH_ENV=$GOMA_FALLBACK_ON_AUTH_FAILURE
 
+                      cd ..
+                      touch "${TMPDIR:=/tmp}"/.goma-ready
+
                   when:
                     stageStatus: All
                   failureStrategies: []
