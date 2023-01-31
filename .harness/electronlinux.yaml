@@ -379,7 +379,7 @@ pipeline:
                     command: |
                       #!/bin/sh
 
-                      echo 'export NUMBER_OF_NINJA_PROCESSES=300' >> $BASH_ENV
+                      echo 'export NUMBER_OF_NINJA_PROCESSES=300' 
                       if [ "`uname`" = "Darwin" ]; then
                         echo 'ulimit -n 10000' >> $BASH_ENV
                         echo 'sudo launchctl limit maxfiles 65536 200000' >> $BASH_ENV
