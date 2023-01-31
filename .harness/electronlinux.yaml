@@ -292,3 +292,81 @@ pipeline:
             type: String
             description: ""
             value: Default
+    - stage:
+        name: linux-x64-testing
+        identifier: linuxx64testing
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Install gnu-tar on macos
+                  identifier: Install_gnutar_on_macos
+                  spec:
+                    shell: Bash
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      if [ "`uname`" == "Darwin" ]; then
+                        if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
+                          brew update
+                          brew install gnu-tar
+                        fi
+                        ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                      fi
+              - step:
+                  type: Run
+                  name: Install python2 on mac
+                  identifier: Install_python2_on_mac
+                  spec:
+                    shell: Bash
+                    command: |
+                      #!/bin/bash -eo pipefail
+                      if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
+                        if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
+                          mkdir python-downloads
+                          echo 'Downloading Python 2.7.18'
+                          curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                          mv python-2.7.18-macosx10.9.pkg python-downloads
+                        else
+                          echo 'Using Python install from cache'
+                        fi
+                        sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
+                      fi
+              - step:
+                  type: SaveCacheGCS
+                  name: Persisting python cache
+                  identifier: Persisting_python_cache
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v2.7.18-python-cache-{{ arch }}
+                    sourcePaths:
+                      - python-downloads
+                    archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: SaveCacheGCS
+                  name: Persisting brew cache
+                  identifier: Persisting_brew_cache
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v5-brew-cache-{{ arch }}
+                    sourcePaths:
+                      - /usr/local/Cellar/gnu-tar
+                      - /usr/local/bin/gtar
+                    archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
