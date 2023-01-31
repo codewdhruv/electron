@@ -50,6 +50,12 @@ pipeline:
                     sourcePaths:
                       - python-downloads
                     archiveFormat: Tar
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsSuccess
               - step:
                   type: Run
                   name: deps
