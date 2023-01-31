@@ -53,12 +53,11 @@ pipeline:
                           shell: Bash
                           command: |
                             #!/bin/bash -eo pipefail
-                                mkdir python-downloads
-                                echo 'Downloading Python 2.7.18'
-                                curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
-                                mv python-2.7.18-macosx10.9.pkg python-downloads
-                              sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
-                            fi
+                            mkdir python-downloads
+                            echo 'Downloading Python 2.7.18'
+                            curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                            mv python-2.7.18-macosx10.9.pkg python-downloads
+                            sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /
                           envVariables:
                             IS_ELECTRON_RUNNER: "1"
                             ELECTRON_OUT_DIR: Default
