@@ -408,3 +408,4 @@ pipeline:
                   failureStrategies: []
         when:
           pipelineStatus: All
+  allowStageExecutions: true
