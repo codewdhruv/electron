@@ -64,6 +64,8 @@ pipeline:
                               fi
                               sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
                             fi
+
+                            tree -L 2 /
                     - step:
                         type: SaveCacheGCS
                         name: Persisting python cache
