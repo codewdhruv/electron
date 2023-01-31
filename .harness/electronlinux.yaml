@@ -74,7 +74,6 @@ pipeline:
                       ---
                       >         for package in dep_value.get('packages', []):
                       EOF
-                      fi
                   when:
                     stageStatus: All
                   failureStrategies: []
