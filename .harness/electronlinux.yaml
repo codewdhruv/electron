@@ -14,7 +14,6 @@ pipeline:
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
@@ -40,10 +39,7 @@ pipeline:
                           shell: Bash
                           command: |
                             #!/bin/bash -eo pipefail
-
-                            brew update
-                            brew install gnu-tar
-                            ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                            curl -L https://github.com/Homebrew/brew/tarball/master -o homebrew.tar.gz
                           envVariables:
                             IS_ELECTRON_RUNNER: "1"
                             ELECTRON_OUT_DIR: Default
@@ -304,6 +300,9 @@ pipeline:
                     stageStatus: All
                   failureStrategies: []
                   spec: {}
+          sharedPaths:
+            - /usr/local/Cellar/gnu-tar
+            - /usr/local/bin/gtar
         variables:
           - name: GCLIENT_EXTRA_ARGS
             type: String
