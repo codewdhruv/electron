@@ -402,5 +402,8 @@ pipeline:
                       echo 'export GOMA_FALLBACK_ON_AUTH_FAILURE=true' >> $BASH_ENV
                       cd ..
                       touch "${TMPDIR:=/tmp}"/.goma-ready
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
         when:
           pipelineStatus: All
