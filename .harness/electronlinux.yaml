@@ -36,11 +36,16 @@ pipeline:
                         identifier: Install_gnutar_on_macos
                         spec:
                           shell: Bash
-                          command: |-
+                          command: |
                             #!/bin/bash -eo pipefail
-                                brew update
-                                brew install gnu-tar
-                              ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+
+                            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)" && echo 'export PATH="/usr/local/bin:$PATH"' >> ~/BASH_ENV
+
+
+
+                            brew update
+                            brew install gnu-tar
+                            ln -fs /usr/local/bin/gtar /usr/local/bin/tar
                           envVariables:
                             IS_ELECTRON_RUNNER: "1"
                             ELECTRON_OUT_DIR: Default
