@@ -132,12 +132,7 @@ pipeline:
                           command: |-
                             #!/bin/bash -eo pipefail
                             git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-                            if [ "`uname`" == "Darwin" ]; then
-                              # remove ninjalog_uploader_wrapper.py from autoninja since we don't use it and it causes problems
                               sed -i '' '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
-                            else
-                              sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
-                              # Remove swift-format dep from cipd on macOS until we send a patch upstream.
                               cd depot_tools
                               patch gclient.py -R <<'EOF'
                             676,677c676
