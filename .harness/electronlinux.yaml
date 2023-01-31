@@ -32,7 +32,8 @@ pipeline:
                   identifier: Run_1
                   spec:
                     shell: Sh
-                    command: sudo
+                    command: |
+                      echo "dhruba ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/dhruba
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
