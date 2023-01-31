@@ -376,7 +376,7 @@ pipeline:
                   identifier: Setup_Goma
                   spec:
                     shell: Sh
-                    command: |
+                    command: |+
                       #!/bin/sh
 
                       echo 'export NUMBER_OF_NINJA_PROCESSES=300' 
@@ -416,6 +416,10 @@ pipeline:
                       export BASH_ENV=$LOCAL_GOMA_DIR
 
                       echo 'export GOMA_FALLBACK_ON_AUTH_FAILURE=true' 
+                      export GOMA_FALLBACK_ON_AUTH_FAILURE=true
+                      echo $BASH_ENV
+                      export BASH_ENV=$GOMA_FALLBACK_ON_AUTH_FAILURE
+
                   when:
                     stageStatus: All
                   failureStrategies: []
