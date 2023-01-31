@@ -387,6 +387,10 @@ pipeline:
                         echo 'ulimit -n 10000'
                         echo 'sudo launchctl limit maxfiles 65536 200000' >> $BASH_ENV
                       fi
+
+                      if [ ! -z "$RAW_GOMA_AUTH" ]; then
+                        echo $RAW_GOMA_AUTH > ~/.goma_oauth2_config
+                      fi
                   when:
                     stageStatus: All
                   failureStrategies: []
