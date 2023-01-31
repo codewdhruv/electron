@@ -301,8 +301,8 @@ pipeline:
                   failureStrategies: []
                   spec: {}
           sharedPaths:
-            - /usr/local/Cellar/gnu-tar
-            - /usr/local/bin/gtar
+            - /usr/local/Cellar/gnu-tar/
+            - /usr/local/bin/gtar/
         variables:
           - name: GCLIENT_EXTRA_ARGS
             type: String
