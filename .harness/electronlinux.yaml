@@ -376,10 +376,11 @@ pipeline:
                   identifier: Setup_Goma
                   spec:
                     shell: Sh
-                    command: |-
-                      #!/bin/bash -eo pipefail
+                    command: |
+                      #!/bin/sh
+
                       echo 'export NUMBER_OF_NINJA_PROCESSES=300' >> $BASH_ENV
-                      if [ "`uname`" == "Darwin" ]; then
+                      if [ "`uname`" = "Darwin" ]; then
                         echo 'ulimit -n 10000' >> $BASH_ENV
                         echo 'sudo launchctl limit maxfiles 65536 200000' >> $BASH_ENV
                       fi
