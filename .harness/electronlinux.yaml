@@ -414,6 +414,8 @@ pipeline:
                       export LOCAL_GOMA_DIR=/harness/build-tools/third_party/goma
                       echo $BASH_ENV
                       export BASH_ENV=$LOCAL_GOMA_DIR
+
+                      echo 'export GOMA_FALLBACK_ON_AUTH_FAILURE=true' 
                   when:
                     stageStatus: All
                   failureStrategies: []
