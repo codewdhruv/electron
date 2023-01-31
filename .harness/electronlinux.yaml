@@ -455,21 +455,6 @@ pipeline:
                   failureStrategies: []
               - step:
                   type: Run
-                  name: Add depot tools to path
-                  identifier: Add_depot_tools_to_path
-                  spec:
-                    shell: Sh
-                    command: |-
-                      #!/bin/bash -eo pipefail
-                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                      export PATH="$PATH:/harness/depot_tools"
-                      echo $BASH_ENV
-                      export BASH_ENV=$PATH
-                  when:
-                    stageStatus: All
-                  failureStrategies: []
-              - step:
-                  type: Run
                   name: Generate deps hash
                   identifier: Generate_deps_hash
                   spec:
