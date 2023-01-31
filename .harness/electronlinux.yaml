@@ -36,7 +36,7 @@ pipeline:
                         spec:
                           connectorRef: harnessdocker
                           image: curlimages/curl:7.87.0
-                          shell: Bash
+                          shell: Sh
                           command: |
                             #!/bin/bash -eo pipefail
                             curl -L https://github.com/Homebrew/brew/tarball/master -o homebrew.tar.gz
