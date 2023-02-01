@@ -785,7 +785,7 @@ pipeline:
                         command: |
                           #!/bin/bash -eo pipefail
                           SEDOPTION="-i"
-                          if [ "`uname`" == "Darwin" ]; then
+                          if [ "`uname`" = "Darwin" ]; then
                             SEDOPTION="-i ''"
                             # Fix Clang Install (wrong binary)
                             rm -rf src/third_party/llvm-build
