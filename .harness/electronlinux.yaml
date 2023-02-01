@@ -78,32 +78,62 @@ pipeline:
                         action:
                           type: MarkAsSuccess
               - step:
-                  type: Run
-                  name: deps
-                  identifier: deps
+                  type: SaveCacheGCS
+                  name: Persisting brew cache
+                  identifier: Persisting_brew_cache
                   spec:
-                    shell: Sh
-                    command: |
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v5-brew-cache-{{ arch }}
+                    sourcePaths:
+                      - /usr/local/Cellar/gnu-tar
+                      - /usr/local/bin/gtar
+                    archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsSuccess
+              - step:
+                  type: Run
+                  name: Get depot tools
+                  identifier: Get_depot_tools
+                  spec:
+                    shell: Bash
+                    command: |-
                       git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-                      ls
-                      sed -i '/ninjalog_uploader_wrapper.py/d' depot_tools/autoninja
                       cd depot_tools
-                      patch gclient.py -R <<'EOF'
+                      git fetch --depth 1 origin b7d8efd8bee494f4cfacacc19cf50fc4d4be3900
+                      git checkout b7d8efd8bee494f4cfacacc19cf50fc4d4be3900
+                      touch .disable_auto_update
+                      cd ..
+                      if [ "`uname`" == "Darwin" ]; then
+                        # remove ninjalog_uploader_wrapper.py from autoninja since we don't use it and it causes problems
+                        sed -i '' '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                      else
+                        sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                        # Remove swift-format dep from cipd on macOS until we send a patch upstream.
+                        cd depot_tools
+                        patch gclient.py -R <<'EOF'
                       676,677c676
                       <         packages = dep_value.get('packages', [])
                       <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
                       ---
                       >         for package in dep_value.get('packages', []):
                       EOF
+                      fi
                   when:
                     stageStatus: All
                   failureStrategies: []
               - step:
                   type: Run
-                  name: add deps
-                  identifier: add_deps
+                  name: Add depot tools to path
+                  identifier: Add_depot_tools_to_path
                   spec:
-                    shell: Sh
+                    shell: Bash
                     command: |-
                       #!/bin/bash -eo pipefail
                       echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
@@ -115,12 +145,14 @@ pipeline:
                   failureStrategies: []
               - step:
                   type: Run
-                  name: free space
-                  identifier: free_space
+                  name: Freeup space on MacOS
+                  identifier: Freeup_space_on_MacOS
                   spec:
-                    shell: Sh
+                    shell: Bash
                     command: |-
-                      sudo mkdir -p $TMPDIR/del-target
+                      #!/bin/bash -eo pipefail
+                      if [ "`uname`" == "Darwin" ]; then
+                        sudo mkdir -p $TMPDIR/del-target
 
                         tmpify() {
                           if [ -d "$1" ]; then
@@ -128,7 +160,7 @@ pipeline:
                           fi
                         }
 
-                          strip_arm_deep() {
+                        strip_arm_deep() {
                           opwd=$(pwd)
                           cd $1
                           f=$(find . -perm +111 -type f)
@@ -187,7 +219,7 @@ pipeline:
                         sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
 
                         # lipo off some huge binaries arm64 versions to save space
-                        strip_arm_deep $(xcode-select -p)/ ./SharedFrameworks
+                        strip_arm_deep $(xcode-select -p)/../SharedFrameworks
                         # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
                       fi
                   when:
@@ -195,8 +227,8 @@ pipeline:
                   failureStrategies: []
               - step:
                   type: Run
-                  name: Run_5
-                  identifier: Run_5
+                  name: Generate deps hash
+                  identifier: Generate_deps_hash
                   spec:
                     shell: Bash
                     command: node script/generate-deps-hash.js && cat .depshash-target
@@ -205,30 +237,68 @@ pipeline:
                   failureStrategies: []
               - step:
                   type: Run
-                  name: Run_6
-                  identifier: Run_6
+                  name: Touch sync done
+                  identifier: Touch_sync_done
                   spec:
-                    shell: Sh
-                    command: |-
+                    shell: Bash
+                    command: |
                       touch .circle-sync-done
-                      ls
                   when:
                     stageStatus: All
                   failureStrategies: []
               - step:
                   type: Run
-                  name: Run_7
-                  identifier: Run_7
+                  name: Prepare for cross OS sync restore
+                  identifier: Prepare_for_cross_OS_sync_restore
                   spec:
-                    shell: Sh
+                    shell: Bash
                     command: |-
                       sudo mkdir -p /var/portal
                       sudo chown -R $(id -u):$(id -g) /var/portal
                   when:
                     stageStatus: All
                   failureStrategies: []
+              - step:
+                  type: RestoreCacheGCS
+                  name: Restoring src cache marker
+                  identifier: Restoring_src_cache_marker
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v16-src-cache-marker-{{ checksum "src/electron/.depshash" }}
+                    archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Halt the job early if the src cache exists
+                  identifier: Halt_the_job_early_if_the_src_cache_exists
+                  spec:
+                    shell: Bash
+                    command: |2-
+                                        if [ -f ".src-cache-marker" ]; then
+                                          circleci-agent step halt
+                                        fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
           sharedPaths:
-            - /src/electron/
+            - /usr/local/Cellar/gnu-tar/
+            - /usr/local/bin/gtar/
+        variables:
+          - name: GCLIENT_EXTRA_ARGS
+            type: String
+            description: ""
+            value: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+          - name: NUMBER_OF_NINJA_PROCESSES
+            type: String
+            description: ""
+            value: "34"
+          - name: ELECTRON_OUT_DIR
+            type: String
+            description: ""
+            value: Default
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
