@@ -14,7 +14,6 @@ pipeline:
     - stage:
         name: teststg
         identifier: teststg
-        description: ""
         type: CI
         spec:
           cloneCodebase: true
@@ -206,6 +205,8 @@ pipeline:
                   when:
                     stageStatus: All
                   failureStrategies: []
+          sharedPaths:
+            - src/electron/
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
