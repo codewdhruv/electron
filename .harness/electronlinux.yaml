@@ -330,6 +330,10 @@ pipeline:
                             fi
                             ln -fs /usr/local/bin/gtar /usr/local/bin/tar
                           fi
+                      when:
+                        stageStatus: Success
+                        condition: "false"
+                      failureStrategies: []
                   - step:
                       type: Run
                       name: Install python2 on mac
@@ -490,7 +494,7 @@ pipeline:
                       spec:
                         connectorRef: gcpdhruba
                         bucket: test-electron
-                        key: v16-src-cache-{{ checksum "src/electron/.depshash" }}
+                        key: v16-src-cache-{{ checksum ".depshash" }}
                         archiveFormat: Tar
                       when:
                         stageStatus: All
@@ -545,8 +549,7 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
-                          export PATH=$PATH:/harness/depot_tools
-                          export BASH_ENV=$BASH_ENV:/harness/depot_tools
+
 
                           gclient runhooks --spec=solutions=[{'name':'','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]
                       when:
