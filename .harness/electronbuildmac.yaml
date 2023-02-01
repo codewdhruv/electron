@@ -33,13 +33,12 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |-
-                      if [ "`uname`" == "Darwin" ]; then
-                        if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
-                          brew update
-                          brew install gnu-tar
-                        fi
-                        ln -fs /usr/local/bin/gtar /usr/local/bin/tar
-                      fi
+                      echo "dhruba ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/dhruba
+                      sudo mkdir python-downloads
+                      echo 'Downloading Python 2.7.18'
+                      curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                      mv python-2.7.18-macosx10.9.pkg python-downloads 
+                      ls
               - step:
                   type: Run
                   name: Install python2 on macos
