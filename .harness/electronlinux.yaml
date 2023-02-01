@@ -655,8 +655,11 @@ pipeline:
                       identifier: Setup_ENV_variables
                       spec:
                         shell: Sh
-                        command: |
+                        command: |-
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
