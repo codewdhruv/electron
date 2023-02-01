@@ -172,6 +172,14 @@ pipeline:
                   when:
                     stageStatus: All
                   failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run_5
+                  identifier: Run_5
+                  spec:
+                    shell: Sh
+                    command: |
+                      node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
