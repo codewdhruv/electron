@@ -188,8 +188,9 @@ pipeline:
                   identifier: Run_6
                   spec:
                     shell: Sh
-                    command: |
-                      touch src/electron/.circle-sync-done
+                    command: |-
+                      touch .circle-sync-done
+                      ls
                   when:
                     stageStatus: All
                   failureStrategies: []
