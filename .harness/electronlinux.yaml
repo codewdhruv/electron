@@ -206,7 +206,7 @@ pipeline:
                     stageStatus: All
                   failureStrategies: []
           sharedPaths:
-            - src/electron/
+            - /src/electron/
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
