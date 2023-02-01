@@ -178,7 +178,7 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |
-                      node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
+                      node script/generate-deps-hash.js && cat .depshash-target
                   when:
                     stageStatus: All
                   failureStrategies: []
