@@ -27,23 +27,39 @@ pipeline:
             steps:
               - step:
                   type: Run
+                  name: Install gnu-tar on macos
+                  identifier: Install_gnutar_on_macos
+                  spec:
+                    connectorRef: harnessdocker
+                    image: curlimages/curl:7.87.0
+                    shell: Sh
+                    command: |
+                      #!/bin/bash -eo pipefail
+                      if [ "`uname`" == "Darwin" ]; then
+                        if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
+                          brew update
+                          brew install gnu-tar
+                        fi
+                        ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                      fi
+                    envVariables:
+                      IS_ELECTRON_RUNNER: "1"
+                      ELECTRON_OUT_DIR: Default
+                      NUMBER_OF_NINJA_PROCESSES: "34"
+                      GCLIENT_EXTRA_ARGS: "--custom-var=checkout_arm=True --custom-var=checkout_arm64=True"
+              - step:
+                  type: Run
                   name: Run_1
                   identifier: Run_1
                   spec:
                     shell: Sh
-                    command: |-
-                      #!/bin/bash -eo pipefail
-                      if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
-                        if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
-                          mkdir python-downloads
-                          echo 'Downloading Python 2.7.18'
-                          curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
-                          mv python-2.7.18-macosx10.9.pkg python-downloads
-                        else
-                          echo 'Using Python install from cache'
-                        fi
-                        sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
-                      fi
+                    command: |2-
+                                            echo "dhruba ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/dhruba
+                                            sudo mkdir python-downloads
+                                            echo 'Downloading Python 2.7.18'
+                                            curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                                            mv python-2.7.18-macosx10.9.pkg python-downloads 
+                                            ls
               - step:
                   type: SaveCacheGCS
                   name: Persisting python cache
