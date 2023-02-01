@@ -166,7 +166,7 @@ pipeline:
                         sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
 
                         # lipo off some huge binaries arm64 versions to save space
-                        strip_arm_deep $(xcode-select -p)/../SharedFrameworks
+                        strip_arm_deep $(xcode-select -p) /SharedFrameworks
                         # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
                       fi
                   when:
