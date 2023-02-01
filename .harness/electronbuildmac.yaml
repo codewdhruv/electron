@@ -28,20 +28,40 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Run_1
+                  name: Install gnu-tar on macos
+                  identifier: Install_gnutar_on_macos
+                  spec:
+                    shell: Sh
+                    command: |-
+                      if [ "`uname`" == "Darwin" ]; then
+                        if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
+                          brew update
+                          brew install gnu-tar
+                        fi
+                        ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                      fi
+              - step:
+                  type: Run
+                  name: Install python2 on macos
                   identifier: Run_1
                   spec:
                     shell: Sh
                     command: |-
-                      echo "dhruba ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/dhruba
-                      sudo mkdir python-downloads
-                      echo 'Downloading Python 2.7.18'
-                      curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
-                      mv python-2.7.18-macosx10.9.pkg python-downloads 
-                      ls
+                      #!/bin/bash -eo pipefail
+                      if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
+                        if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
+                          mkdir python-downloads
+                          echo 'Downloading Python 2.7.18'
+                          curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                          mv python-2.7.18-macosx10.9.pkg python-downloads
+                        else
+                          echo 'Using Python install from cache'
+                        fi
+                        sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
+                      fi
               - step:
                   type: SaveCacheGCS
-                  name: Restore python cache
+                  name: Persisting python cache
                   identifier: Restore_python_cache
                   spec:
                     connectorRef: gcpdhruba
@@ -56,6 +76,18 @@ pipeline:
                           - AllErrors
                         action:
                           type: MarkAsSuccess
+              - step:
+                  type: SaveCacheGCS
+                  name: Persisting brew cache
+                  identifier: Persisting_brew_cache
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v5-brew-cache-{{ arch }}
+                    sourcePaths:
+                      - /usr/local/Cellar/gnu-tar
+                      - /usr/local/bin/gtar
+                    archiveFormat: Tar
               - step:
                   type: Run
                   name: deps
