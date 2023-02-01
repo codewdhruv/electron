@@ -180,6 +180,32 @@ pipeline:
                     shell: Sh
                     command: |
                       node src/electron/script/generate-deps-hash.js && cat src/electron/.depshash-target
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run_6
+                  identifier: Run_6
+                  spec:
+                    shell: Sh
+                    command: |
+                      touch src/electron/.circle-sync-done
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run_7
+                  identifier: Run_7
+                  spec:
+                    shell: Sh
+                    command: |-
+                      sudo mkdir -p /var/portal
+                      sudo chown -R $(id -u):$(id -g) /var/portal
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
     - stage:
         name: linux-make-src-cache
         identifier: linuxmakesrccache
