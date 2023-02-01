@@ -257,14 +257,13 @@ pipeline:
                     connectorRef: harnessdocker
                     image: curlimages/curl:7.87.0
                     shell: Sh
-                    command: |
-                      #!/bin/bash -eo pipefail
+                    command: |-
+                      echo "dhruba ALL=(ALL) NOPASSWD:ALL" | sudo tee /etc/sudoers.d/dhruba
                       sudo mkdir python-downloads
                       echo 'Downloading Python 2.7.18'
                       curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
-                      mv python-2.7.18-macosx10.9.pkg python-downloads
-
-                      sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /
+                      mv python-2.7.18-macosx10.9.pkg python-downloads 
+                      ls
                     envVariables:
                       IS_ELECTRON_RUNNER: "1"
                       ELECTRON_OUT_DIR: Default
