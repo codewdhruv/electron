@@ -330,6 +330,12 @@ pipeline:
                             fi
                             ln -fs /usr/local/bin/gtar /usr/local/bin/tar
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: Success
                         condition: "false"
@@ -353,6 +359,12 @@ pipeline:
                             fi
                             sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                   - step:
                       type: SaveCacheGCS
                       name: Persisting python cache
@@ -388,7 +400,7 @@ pipeline:
                       identifier: Setup_Goma
                       spec:
                         shell: Sh
-                        command: |+
+                        command: |
                           #!/bin/sh
 
                           echo 'export NUMBER_OF_NINJA_PROCESSES=300' 
@@ -434,7 +446,12 @@ pipeline:
 
                           cd ..
                           touch "${TMPDIR:=/tmp}"/.goma-ready
-
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -462,6 +479,12 @@ pipeline:
                           >         for package in dep_value.get('packages', []):
                           EOF
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -472,6 +495,12 @@ pipeline:
                       spec:
                         shell: Sh
                         command: node script/generate-deps-hash.js && cat .depshash-target
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -484,6 +513,12 @@ pipeline:
                         command: |-
                           sudo mkdir -p /var/portal
                           sudo chown -R $(id -u):$(id -g) /var/portal
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -512,6 +547,12 @@ pipeline:
                             rm -rf src
                             mv /var/portal/src ./
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -527,6 +568,12 @@ pipeline:
                             echo src cache was not restored for some reason, idk what happened here...
                             exit 1
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -539,6 +586,12 @@ pipeline:
                         command: |-
                           #!/bin/bash -eo pipefail
                           rm -rf src/electron
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -549,9 +602,310 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
+                          gclient runhooks --spec="solutions=[{'name':'src/electron','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Generate DEPS hash
+                      identifier: Generate_DEPS_hash
+                      spec:
+                        shell: Sh
+                        command: node script/generate-deps-hash.js && cat .depshash-target
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Add depot tools to path
+                      identifier: Add_depot_tools_to_path
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Setup ENV variables
+                      identifier: Setup_ENV_variables
+                      spec:
+                        shell: Sh
+                        command: |
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' >> $BASH_ENV
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Wait for GOMA
+                      identifier: Wait_for_GOMA
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          until [ -f "${TMPDIR:=/tmp}"/.goma-ready ]
+                          do
+                              sleep 5
+                          done
+                          echo "Goma ready"
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Free up space on MacOS
+                      identifier: Free_up_space_on_MacOS
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "`uname`" == "Darwin" ]; then
+                            sudo mkdir -p $TMPDIR/del-target
 
+                            tmpify() {
+                              if [ -d "$1" ]; then
+                                sudo mv "$1" $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
+                              fi
+                            }
 
-                          gclient runhooks --spec=solutions=[{'name':'','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]
+                            strip_arm_deep() {
+                              opwd=$(pwd)
+                              cd $1
+                              f=$(find . -perm +111 -type f)
+                              for fp in $f
+                              do
+                                if [[ $(file "$fp") == *"universal binary"* ]]; then
+                                  if [[ $(file "$fp") == *"arm64e)"* ]]; then
+                                    sudo lipo -remove arm64e "$fp" -o "$fp" || true
+                                  fi
+                                  if [[ $(file "$fp") == *"arm64)"* ]]; then
+                                    sudo lipo -remove arm64 "$fp" -o "$fp" || true
+                                  fi
+                                fi
+                              done
+
+                              cd $opwd
+                            }
+
+                            tmpify /Library/Developer/CoreSimulator
+                            tmpify ~/Library/Developer/CoreSimulator
+                            tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
+                            tmpify $(xcode-select -p)/Platforms/iPhoneOS.platform
+                            tmpify $(xcode-select -p)/Platforms/WatchOS.platform
+                            tmpify $(xcode-select -p)/Platforms/WatchSimulator.platform
+                            tmpify $(xcode-select -p)/Platforms/AppleTVSimulator.platform
+                            tmpify $(xcode-select -p)/Platforms/iPhoneSimulator.platform
+                            tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/metal/ios
+                            tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift
+                            tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0
+                            tmpify ~/.rubies
+                            tmpify ~/Library/Caches/Homebrew
+                            tmpify /usr/local/Homebrew
+                            sudo rm -rf $TMPDIR/del-target
+
+                            # sudo rm -rf "/System/Library/Desktop Pictures"
+                            # sudo rm -rf /System/Library/Templates/Data
+                            # sudo rm -rf /System/Library/Speech/Voices
+                            # sudo rm -rf "/System/Library/Screen Savers"
+                            # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs
+                            # sudo rm -rf "/System/Volumes/Data/Library/Application Support/Apple/Photos/Print Products"
+                            # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/
+                            # sudo rm -rf /System/Volumes/Data/Library/Java
+                            # sudo rm -rf /System/Volumes/Data/Library/Ruby
+                            # sudo rm -rf /System/Volumes/Data/Library/Printers
+                            # sudo rm -rf /System/iOSSupport
+                            # sudo rm -rf /System/Applications/*.app
+                            # sudo rm -rf /System/Applications/Utilities/*.app
+                            # sudo rm -rf /System/Library/LinguisticData
+                            # sudo rm -rf /System/Volumes/Data/private/var/db/dyld/*
+                            # sudo rm -rf /System/Library/Fonts/*
+                            # sudo rm -rf /System/Library/PreferencePanes
+                            # sudo rm -rf /System/Library/AssetsV2/*
+                            sudo rm -rf /Applications/Safari.app
+                            sudo rm -rf ~/project/src/build/linux
+                            sudo rm -rf ~/project/src/third_party/catapult/tracing/test_data
+                            sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
+
+                            # lipo off some huge binaries arm64 versions to save space
+                            strip_arm_deep $(xcode-select -p)/../SharedFrameworks
+                            # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Fix SYNC
+                      identifier: Fix_SYNC
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          SEDOPTION="-i"
+                          if [ "`uname`" == "Darwin" ]; then
+                            SEDOPTION="-i ''"
+                            # Fix Clang Install (wrong binary)
+                            rm -rf src/third_party/llvm-build
+                            python3 src/tools/clang/scripts/update.py
+
+                            # Fix esbuild (wrong binary)
+                            echo 'infra/3pp/tools/esbuild/${platform}' `gclient getdep --deps-file=src/third_party/devtools-frontend/src/DEPS -r 'third_party/esbuild:infra/3pp/tools/esbuild/${platform}'` > esbuild_ensure_file
+                            # Remove extra output from calling gclient getdep which always calls update_depot_tools
+                            sed -i '' "s/Updating depot_tools... //g" esbuild_ensure_file
+                            cipd ensure --root src/third_party/devtools-frontend/src/third_party/esbuild -ensure-file esbuild_ensure_file
+                          fi
+
+                          # Make sure we are using the right ninja
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=src/DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
+                          cipd ensure --root src/third_party/ninja -ensure-file ninja_ensure_file
+
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' >> $BASH_ENV
+
+                          cd src/third_party/angle
+                          rm .git/objects/info/alternates
+                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
+                          cp .git/config .git/config.backup
+                          git remote remove origin
+                          mv .git/config.backup .git/config
+                          git fetch
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Delete all git directories for mac deps
+                      identifier: Delete_all_git_directories_for_mac_deps
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          if [ "`uname`" == "Darwin" ]; then
+                            cd src
+                            ( find . -type d -name ".git" -not -path "./third_party/angle/*" -not -path "./third_party/dawn/*" -not -path "./electron/*" ) | xargs rm -rf
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Default GN gen
+                      identifier: Default_GN_gen
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          cd src
+                          gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: electron build
+                      identifier: electron_build
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          cd src
+
+                          # Lets generate a snapshot and mksnapshot and then delete all the x-compiled generated files to save space
+                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" == "1" ]; then
+                            ninja -C out/Default electron:electron_mksnapshot_zip -j $NUMBER_OF_NINJA_PROCESSES
+                            ninja -C out/Default tools/v8_context_snapshot -j $NUMBER_OF_NINJA_PROCESSES
+                            gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
+                            # Remove unused args from mksnapshot_args
+                            SEDOPTION="-i"
+                            if [ "`uname`" == "Darwin" ]; then
+                              SEDOPTION="-i ''"
+                            fi
+                            sed $SEDOPTION '/.*builtins-pgo/d' out/Default/mksnapshot_args
+                            sed $SEDOPTION '/--turbo-profiling-input/d' out/Default/mksnapshot_args
+                            (cd out/Default; zip mksnapshot.zip mksnapshot_args clang_x64_v8_arm64/gen/v8/embedded.S)
+                            if [ "false" == "true" ]; then
+                              rm -rf out/Default/clang_x64_v8_arm64/gen
+                              rm -rf out/Default/clang_x64_v8_arm64/obj
+                              rm -rf out/Default/clang_x64_v8_arm64/thinlto-cache
+                              rm -rf out/Default/clang_x64/obj
+                              # Regenerate because we just deleted some ninja files
+                              gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
+                            fi
+                            # For x-compiles this will be built to the wrong arch after the context snapshot build
+                            # so we wipe it before re-linking it below
+                            rm -rf out/Default/libffmpeg.dylib
+                          fi
+                          NINJA_SUMMARIZE_BUILD=1 autoninja -C out/Default electron -j $NUMBER_OF_NINJA_PROCESSES
+                          cp out/Default/.ninja_log out/electron_ninja_log
+                          node electron/script/check-symlinks.js
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
