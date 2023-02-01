@@ -871,16 +871,11 @@ pipeline:
                         command: |-
                           #!/bin/bash -eo pipefail
 
-                          # Lets generate a snapshot and mksnapshot and then delete all the x-compiled generated files to save space
-                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" == 1 ]; then
                             ninja -C out/Default electron:electron_mksnapshot_zip -j $NUMBER_OF_NINJA_PROCESSES
                             ninja -C out/Default tools/v8_context_snapshot -j $NUMBER_OF_NINJA_PROCESSES
                             gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
                             # Remove unused args from mksnapshot_args
                             SEDOPTION="-i"
-                            if [ "`uname`" == "Darwin" ]; then
-                              SEDOPTION="-i ''"
-                            fi
                             sed $SEDOPTION '/.*builtins-pgo/d' out/Default/mksnapshot_args
                             sed $SEDOPTION '/--turbo-profiling-input/d' out/Default/mksnapshot_args
                             (cd out/Default; zip mksnapshot.zip mksnapshot_args clang_x64_v8_arm64/gen/v8/embedded.S)
@@ -898,7 +893,7 @@ pipeline:
                           fi
                           NINJA_SUMMARIZE_BUILD=1 autoninja -C out/Default electron -j $NUMBER_OF_NINJA_PROCESSES
                           cp out/Default/.ninja_log out/electron_ninja_log
-                          node electron/script/check-symlinks.js
+                          node script/check-symlinks.js
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
