@@ -40,7 +40,7 @@ pipeline:
                       ls
               - step:
                   type: SaveCacheGCS
-                  name: Restore python cache
+                  name: Persisting python cache
                   identifier: Restore_python_cache
                   spec:
                     connectorRef: gcpdhruba
