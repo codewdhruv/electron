@@ -176,7 +176,7 @@ pipeline:
                   name: Run_5
                   identifier: Run_5
                   spec:
-                    shell: Sh
+                    shell: Bash
                     command: |
                       node script/generate-deps-hash.js && cat .depshash-target
                   when:
