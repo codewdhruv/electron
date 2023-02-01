@@ -831,7 +831,7 @@ pipeline:
                         command: |
                           #!/bin/bash -eo pipefail
                           if [ "`uname`" == "Darwin" ]; then
-                            cd src
+
                             ( find . -type d -name ".git" -not -path "./third_party/angle/*" -not -path "./third_party/dawn/*" -not -path "./electron/*" ) | xargs rm -rf
                           fi
                         envVariables:
@@ -851,7 +851,7 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
-                          cd src
+
                           gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
@@ -870,7 +870,6 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
-                          cd src
 
                           # Lets generate a snapshot and mksnapshot and then delete all the x-compiled generated files to save space
                           if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" == "1" ]; then
