@@ -227,275 +227,272 @@ pipeline:
             spec: {}
           execution:
             steps:
-              - stepGroup:
-                  name: electron-build
-                  identifier: electronbuild
-                  steps:
-                    - step:
-                        type: Run
-                        name: Install gnu-tar on macos
-                        identifier: Install_gnutar_on_macos
-                        spec:
-                          connectorRef: harnessdocker
-                          image: curlimages/curl:7.87.0
-                          shell: Sh
-                          command: |
-                            #!/bin/bash -eo pipefail
-                            if [ "`uname`" == "Darwin" ]; then
-                              if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
-                                brew update
-                                brew install gnu-tar
-                              fi
-                              ln -fs /usr/local/bin/gtar /usr/local/bin/tar
-                            fi
-                          envVariables:
-                            IS_ELECTRON_RUNNER: "1"
-                            ELECTRON_OUT_DIR: Default
-                            NUMBER_OF_NINJA_PROCESSES: "34"
-                            GCLIENT_EXTRA_ARGS: "--custom-var=checkout_arm=True --custom-var=checkout_arm64=True"
-                    - step:
-                        type: Run
-                        name: Install python2 on mac
-                        identifier: Install_python2_on_mac
-                        spec:
-                          connectorRef: harnessdocker
-                          image: curlimages/curl:7.87.0
-                          shell: Sh
-                          command: |
-                            #!/bin/bash -eo pipefail
-                            sudo mkdir python-downloads
-                            echo 'Downloading Python 2.7.18'
-                            curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
-                            mv python-2.7.18-macosx10.9.pkg python-downloads
+              - step:
+                  type: Run
+                  name: Install gnu-tar on macos
+                  identifier: Install_gnutar_on_macos
+                  spec:
+                    connectorRef: harnessdocker
+                    image: curlimages/curl:7.87.0
+                    shell: Sh
+                    command: |
+                      #!/bin/bash -eo pipefail
+                      if [ "`uname`" == "Darwin" ]; then
+                        if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
+                          brew update
+                          brew install gnu-tar
+                        fi
+                        ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                      fi
+                    envVariables:
+                      IS_ELECTRON_RUNNER: "1"
+                      ELECTRON_OUT_DIR: Default
+                      NUMBER_OF_NINJA_PROCESSES: "34"
+                      GCLIENT_EXTRA_ARGS: "--custom-var=checkout_arm=True --custom-var=checkout_arm64=True"
+              - step:
+                  type: Run
+                  name: Install python2 on mac
+                  identifier: Install_python2_on_mac
+                  spec:
+                    connectorRef: harnessdocker
+                    image: curlimages/curl:7.87.0
+                    shell: Sh
+                    command: |
+                      #!/bin/bash -eo pipefail
+                      sudo mkdir python-downloads
+                      echo 'Downloading Python 2.7.18'
+                      curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                      mv python-2.7.18-macosx10.9.pkg python-downloads
 
-                            sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /
-                          envVariables:
-                            IS_ELECTRON_RUNNER: "1"
-                            ELECTRON_OUT_DIR: Default
-                            NUMBER_OF_NINJA_PROCESSES: "34"
-                            GCLIENT_EXTRA_ARGS: "--custom-var=checkout_arm=True --custom-var=checkout_arm64=True"
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: SaveCacheGCS
-                        name: Persisting python cache
-                        identifier: Persisting_python_cache
-                        spec:
-                          connectorRef: gcpdhruba
-                          bucket: test-electron
-                          key: v2.7.18-python-cache-{{ arch }}
-                          sourcePaths:
-                            - python-downloads
-                          archiveFormat: Tar
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: SaveCacheGCS
-                        name: Persisting brew cache
-                        identifier: Persisting_brew_cache
-                        spec:
-                          connectorRef: gcpdhruba
-                          bucket: test-electron
-                          key: v5-brew-cache-{{ arch }}
-                          sourcePaths:
-                            - /usr/local/Cellar/gnu-tar
-                            - /usr/local/bin/gtar
-                          archiveFormat: Tar
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: Run
-                        name: test
-                        identifier: test
-                        spec:
-                          shell: Sh
-                          command: |-
-                            #!/bin/bash -eo pipefail
-                            if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
-                              if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
-                                mkdir python-downloads
-                                echo 'Downloading Python 2.7.18'
-                                curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
-                                mv python-2.7.18-macosx10.9.pkg python-downloads
-                              else
-                                echo 'Using Python install from cache'
-                              fi
-                              sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
-                            fi
-                    - step:
-                        type: Run
-                        name: Get depot tools
-                        identifier: Get_depot_tools
-                        spec:
-                          shell: Bash
-                          command: |-
-                            git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-                            sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: Run
-                        name: Add depot tools to path
-                        identifier: Add_depot_tools_to_path
-                        spec:
-                          shell: Bash
-                          command: |-
-                            #!/bin/bash -eo pipefail
-                            echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                            export PATH="$PATH:/harness/depot_tools"
-                            echo $BASH_ENV
-                            export BASH_ENV=$PATH
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: Run
-                        name: Freeup space on MacOS
-                        identifier: Freeup_space_on_MacOS
-                        spec:
-                          shell: Bash
-                          command: |-
-                            #!/bin/bash -eo pipefail
-                            if [ "`uname`" == "Darwin" ]; then
-                              sudo mkdir -p $TMPDIR/del-target
-
-                              tmpify() {
-                                if [ -d "$1" ]; then
-                                  sudo mv "$1" $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
-                                fi
-                              }
-
-                              strip_arm_deep() {
-                                opwd=$(pwd)
-                                cd $1
-                                f=$(find . -perm +111 -type f)
-                                for fp in $f
-                                do
-                                  if [[ $(file "$fp") == *"universal binary"* ]]; then
-                                    if [[ $(file "$fp") == *"arm64e)"* ]]; then
-                                      sudo lipo -remove arm64e "$fp" -o "$fp" || true
-                                    fi
-                                    if [[ $(file "$fp") == *"arm64)"* ]]; then
-                                      sudo lipo -remove arm64 "$fp" -o "$fp" || true
-                                    fi
-                                  fi
-                                done
-
-                                cd $opwd
-                              }
-
-                              tmpify /Library/Developer/CoreSimulator
-                              tmpify ~/Library/Developer/CoreSimulator
-                              tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
-                              tmpify $(xcode-select -p)/Platforms/iPhoneOS.platform
-                              tmpify $(xcode-select -p)/Platforms/WatchOS.platform
-                              tmpify $(xcode-select -p)/Platforms/WatchSimulator.platform
-                              tmpify $(xcode-select -p)/Platforms/AppleTVSimulator.platform
-                              tmpify $(xcode-select -p)/Platforms/iPhoneSimulator.platform
-                              tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/metal/ios
-                              tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift
-                              tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0
-                              tmpify ~/.rubies
-                              tmpify ~/Library/Caches/Homebrew
-                              tmpify /usr/local/Homebrew
-                              sudo rm -rf $TMPDIR/del-target
-
-                              # sudo rm -rf "/System/Library/Desktop Pictures"
-                              # sudo rm -rf /System/Library/Templates/Data
-                              # sudo rm -rf /System/Library/Speech/Voices
-                              # sudo rm -rf "/System/Library/Screen Savers"
-                              # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs
-                              # sudo rm -rf "/System/Volumes/Data/Library/Application Support/Apple/Photos/Print Products"
-                              # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/
-                              # sudo rm -rf /System/Volumes/Data/Library/Java
-                              # sudo rm -rf /System/Volumes/Data/Library/Ruby
-                              # sudo rm -rf /System/Volumes/Data/Library/Printers
-                              # sudo rm -rf /System/iOSSupport
-                              # sudo rm -rf /System/Applications/*.app
-                              # sudo rm -rf /System/Applications/Utilities/*.app
-                              # sudo rm -rf /System/Library/LinguisticData
-                              # sudo rm -rf /System/Volumes/Data/private/var/db/dyld/*
-                              # sudo rm -rf /System/Library/Fonts/*
-                              # sudo rm -rf /System/Library/PreferencePanes
-                              # sudo rm -rf /System/Library/AssetsV2/*
-                              sudo rm -rf /Applications/Safari.app
-                              sudo rm -rf ~/project/src/build/linux
-                              sudo rm -rf ~/project/src/third_party/catapult/tracing/test_data
-                              sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
-
-                              # lipo off some huge binaries arm64 versions to save space
-                              strip_arm_deep $(xcode-select -p)/../SharedFrameworks
-                              # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
-                            fi
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: Run
-                        name: Generate deps hash
-                        identifier: Generate_deps_hash
-                        spec:
-                          shell: Bash
-                          command: node script/generate-deps-hash.js && cat .depshash-target
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: Run
-                        name: Touch sync done
-                        identifier: Touch_sync_done
-                        spec:
-                          shell: Bash
-                          command: |
-                            touch .circle-sync-done
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: Run
-                        name: Prepare for cross OS sync restore
-                        identifier: Prepare_for_cross_OS_sync_restore
-                        spec:
-                          shell: Bash
-                          command: |-
-                            sudo mkdir -p /var/portal
-                            sudo chown -R $(id -u):$(id -g) /var/portal
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: RestoreCacheGCS
-                        name: Restoring src cache marker
-                        identifier: Restoring_src_cache_marker
-                        spec:
-                          connectorRef: gcpdhruba
-                          bucket: test-electron
-                          key: v16-src-cache-marker-{{ checksum "src/electron/.depshash" }}
-                          archiveFormat: Tar
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
-                    - step:
-                        type: Run
-                        name: Halt the job early if the src cache exists
-                        identifier: Halt_the_job_early_if_the_src_cache_exists
-                        spec:
-                          shell: Bash
-                          command: |2-
-                                              if [ -f ".src-cache-marker" ]; then
-                                                circleci-agent step halt
-                                              fi
-                        when:
-                          stageStatus: All
-                        failureStrategies: []
+                      sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /
+                    envVariables:
+                      IS_ELECTRON_RUNNER: "1"
+                      ELECTRON_OUT_DIR: Default
+                      NUMBER_OF_NINJA_PROCESSES: "34"
+                      GCLIENT_EXTRA_ARGS: "--custom-var=checkout_arm=True --custom-var=checkout_arm64=True"
                   when:
                     stageStatus: All
                   failureStrategies: []
-                  spec: {}
+              - step:
+                  type: SaveCacheGCS
+                  name: Persisting python cache
+                  identifier: Persisting_python_cache
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v2.7.18-python-cache-{{ arch }}
+                    sourcePaths:
+                      - python-downloads
+                    archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: SaveCacheGCS
+                  name: Persisting brew cache
+                  identifier: Persisting_brew_cache
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v5-brew-cache-{{ arch }}
+                    sourcePaths:
+                      - /usr/local/Cellar/gnu-tar
+                      - /usr/local/bin/gtar
+                    archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsSuccess
+              - step:
+                  type: Run
+                  name: Get depot tools
+                  identifier: Get_depot_tools
+                  spec:
+                    shell: Bash
+                    command: |-
+                      git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+                      cd depot_tools
+                      git fetch --depth 1 origin b7d8efd8bee494f4cfacacc19cf50fc4d4be3900
+                      git checkout b7d8efd8bee494f4cfacacc19cf50fc4d4be3900
+                      touch .disable_auto_update
+                      cd ..
+                      if [ "`uname`" == "Darwin" ]; then
+                        # remove ninjalog_uploader_wrapper.py from autoninja since we don't use it and it causes problems
+                        sed -i '' '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                      else
+                        sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                        # Remove swift-format dep from cipd on macOS until we send a patch upstream.
+                        cd depot_tools
+                        patch gclient.py -R <<'EOF'
+                      676,677c676
+                      <         packages = dep_value.get('packages', [])
+                      <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
+                      ---
+                      >         for package in dep_value.get('packages', []):
+                      EOF
+                      fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Add depot tools to path
+                  identifier: Add_depot_tools_to_path
+                  spec:
+                    shell: Bash
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                      export PATH="$PATH:/harness/depot_tools"
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Freeup space on MacOS
+                  identifier: Freeup_space_on_MacOS
+                  spec:
+                    shell: Bash
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      if [ "`uname`" == "Darwin" ]; then
+                        sudo mkdir -p $TMPDIR/del-target
+
+                        tmpify() {
+                          if [ -d "$1" ]; then
+                            sudo mv "$1" $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
+                          fi
+                        }
+
+                        strip_arm_deep() {
+                          opwd=$(pwd)
+                          cd $1
+                          f=$(find . -perm +111 -type f)
+                          for fp in $f
+                          do
+                            if [[ $(file "$fp") == *"universal binary"* ]]; then
+                              if [[ $(file "$fp") == *"arm64e)"* ]]; then
+                                sudo lipo -remove arm64e "$fp" -o "$fp" || true
+                              fi
+                              if [[ $(file "$fp") == *"arm64)"* ]]; then
+                                sudo lipo -remove arm64 "$fp" -o "$fp" || true
+                              fi
+                            fi
+                          done
+
+                          cd $opwd
+                        }
+
+                        tmpify /Library/Developer/CoreSimulator
+                        tmpify ~/Library/Developer/CoreSimulator
+                        tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
+                        tmpify $(xcode-select -p)/Platforms/iPhoneOS.platform
+                        tmpify $(xcode-select -p)/Platforms/WatchOS.platform
+                        tmpify $(xcode-select -p)/Platforms/WatchSimulator.platform
+                        tmpify $(xcode-select -p)/Platforms/AppleTVSimulator.platform
+                        tmpify $(xcode-select -p)/Platforms/iPhoneSimulator.platform
+                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/metal/ios
+                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift
+                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0
+                        tmpify ~/.rubies
+                        tmpify ~/Library/Caches/Homebrew
+                        tmpify /usr/local/Homebrew
+                        sudo rm -rf $TMPDIR/del-target
+
+                        # sudo rm -rf "/System/Library/Desktop Pictures"
+                        # sudo rm -rf /System/Library/Templates/Data
+                        # sudo rm -rf /System/Library/Speech/Voices
+                        # sudo rm -rf "/System/Library/Screen Savers"
+                        # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs
+                        # sudo rm -rf "/System/Volumes/Data/Library/Application Support/Apple/Photos/Print Products"
+                        # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/
+                        # sudo rm -rf /System/Volumes/Data/Library/Java
+                        # sudo rm -rf /System/Volumes/Data/Library/Ruby
+                        # sudo rm -rf /System/Volumes/Data/Library/Printers
+                        # sudo rm -rf /System/iOSSupport
+                        # sudo rm -rf /System/Applications/*.app
+                        # sudo rm -rf /System/Applications/Utilities/*.app
+                        # sudo rm -rf /System/Library/LinguisticData
+                        # sudo rm -rf /System/Volumes/Data/private/var/db/dyld/*
+                        # sudo rm -rf /System/Library/Fonts/*
+                        # sudo rm -rf /System/Library/PreferencePanes
+                        # sudo rm -rf /System/Library/AssetsV2/*
+                        sudo rm -rf /Applications/Safari.app
+                        sudo rm -rf ~/project/src/build/linux
+                        sudo rm -rf ~/project/src/third_party/catapult/tracing/test_data
+                        sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
+
+                        # lipo off some huge binaries arm64 versions to save space
+                        strip_arm_deep $(xcode-select -p)/../SharedFrameworks
+                        # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
+                      fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Generate deps hash
+                  identifier: Generate_deps_hash
+                  spec:
+                    shell: Bash
+                    command: node script/generate-deps-hash.js && cat .depshash-target
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Touch sync done
+                  identifier: Touch_sync_done
+                  spec:
+                    shell: Bash
+                    command: |
+                      touch .circle-sync-done
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Prepare for cross OS sync restore
+                  identifier: Prepare_for_cross_OS_sync_restore
+                  spec:
+                    shell: Bash
+                    command: |-
+                      sudo mkdir -p /var/portal
+                      sudo chown -R $(id -u):$(id -g) /var/portal
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: RestoreCacheGCS
+                  name: Restoring src cache marker
+                  identifier: Restoring_src_cache_marker
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v16-src-cache-marker-{{ checksum "src/electron/.depshash" }}
+                    archiveFormat: Tar
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Halt the job early if the src cache exists
+                  identifier: Halt_the_job_early_if_the_src_cache_exists
+                  spec:
+                    shell: Bash
+                    command: |2-
+                                        if [ -f ".src-cache-marker" ]; then
+                                          circleci-agent step halt
+                                        fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
           sharedPaths:
             - /usr/local/Cellar/gnu-tar/
             - /usr/local/bin/gtar/
