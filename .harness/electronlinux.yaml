@@ -672,6 +672,7 @@ pipeline:
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
                           git clone --depth=1 https://chromium.googlesource.com/chromium/src/third_party.git
+                          ls
                           cd third_party
                           npm install
                         envVariables:
@@ -802,22 +803,29 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
-                          #!/bin/bash -eo pipefail
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
+                          cd buildtools
+                          npm install
 
                           echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
                           export PATH="$PATH:/harness/depot_tools"
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/src/third_party.git
+                          ls
+                          cd third_party
+                          npm install
+
                           SEDOPTION="-i"
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'depot_tools/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure --root depot_tools/third_party/ninja -ensure-file ninja_ensure_file
+                          cipd ensure --root third_party/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
-                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools/third_party/ninja"' >> $BASH_ENV
+                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"' 
 
-                          cd depot_tools/third_party/angle
+                          cd third_party/angle
                           rm .git/objects/info/alternates
                           git remote set-url origin https://chromium.googlesource.com/angle/angle.git
                           cp .git/config .git/config.backup
