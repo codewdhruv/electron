@@ -960,6 +960,11 @@ pipeline:
                         command: |-
                           #!/bin/bash -eo pipefail
 
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
+                          export PATH="$PATH:/harness/depot_tools/ninja"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
                             ninja -C out/Default electron:electron_mksnapshot_zip -j $NUMBER_OF_NINJA_PROCESSES
                             ninja -C out/Default tools/v8_context_snapshot -j $NUMBER_OF_NINJA_PROCESSES
                             gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
