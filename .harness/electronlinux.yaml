@@ -857,9 +857,9 @@ pipeline:
                           fi
 
                           # Make sure we are using the right ninja
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'depot_tools/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'harness/depot_tools/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure --root depot_tools/ninja -ensure-file ninja_ensure_file
+                          cipd ensure --root harness/depot_tools/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
                           echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
@@ -881,6 +881,23 @@ pipeline:
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_35
+                      identifier: Run_35
+                      spec:
+                        shell: Sh
+                        command: |-
+                          cd depot_tools/angle
+                          rm .git/objects/info/alternates
+                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
+                          cp .git/config .git/config.backup
+                          git remote remove origin
+                          mv .git/config.backup .git/config
+                          git fetch
                       when:
                         stageStatus: All
                       failureStrategies: []
