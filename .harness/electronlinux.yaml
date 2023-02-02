@@ -876,7 +876,7 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
-                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
+                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"'
 
                           cd depot_tools
                           ls
@@ -902,14 +902,14 @@ pipeline:
 
 
                           SEDOPTION="-i"
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure --root src/third_party/ninja -ensure-file ninja_ensure_file
+                          cipd ensure --root third_party/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
-                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' >> $BASH_ENV
+                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"' >> $BASH_ENV
 
-                          cd src/third_party/angle
+                          cd third_party/angle
                           rm .git/objects/info/alternates
                           git remote set-url origin https://chromium.googlesource.com/angle/angle.git
                           cp .git/config .git/config.backup
