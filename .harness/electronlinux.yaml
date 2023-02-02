@@ -685,7 +685,7 @@ pipeline:
                           done
                           echo "Goma ready"
 
-                          cd depot-tools
+                          sleep 10
                           ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
