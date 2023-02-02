@@ -810,9 +810,9 @@ pipeline:
                           SEDOPTION="-i"
 
                           # Make sure we are using the right ninja
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'depot_tools/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'depot_tools/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure --root depot_tools/third_party/ninja -ensure-file ninja_ensure_file
+                          cipd ensure --root depot_tools/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
                           echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"' 
