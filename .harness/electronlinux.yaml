@@ -694,6 +694,16 @@ pipeline:
                       failureStrategies: []
                   - step:
                       type: Run
+                      name: Run_38
+                      identifier: Run_38
+                      spec:
+                        shell: Sh
+                        command: |-
+                          git clone --depth=1 https://chromium.googlesource.com/infra.git
+                          cd infra
+                          npm install
+                  - step:
+                      type: Run
                       name: Wait for GOMA
                       identifier: Wait_for_GOMA
                       spec:
