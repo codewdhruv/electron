@@ -1019,8 +1019,7 @@ pipeline:
                         command: |-
                           #!/bin/bash -eo pipefail
 
-                          echo 'export NINJA_BUILDTOOLS_PATH="'"$PWD"'/third_party"'
-                          export NINJA_BUILDTOOLS_PATH="/harness/third_party"
+                          export NINJA_BUILDTOOLS_PATH="/harness/third_party/ninja"
                           echo $BASH_ENV
                           export BASH_ENV=$NINJA_BUILDTOOLS_PATH
 
