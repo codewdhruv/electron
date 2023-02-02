@@ -467,6 +467,12 @@ pipeline:
                           # Remove swift-format dep from cipd on macOS until we send a patch upstream.
                           cd depot_tools
                           patch gclient.py -R <<'EOF'
+
+                          676,677c676
+                          <         packages = dep_value.get('packages', [])
+                          <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
+                          ---
+                          >         for package in dep_value.get('packages', []):
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
