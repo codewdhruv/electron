@@ -463,14 +463,18 @@ pipeline:
                         shell: Sh
                         command: |-
                           git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-                          sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
-                          cd depot_tools
-                          patch gclient.py -R <<'EOF'
-
-                                 packages = dep_value.get('packages', [])
-                                 for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
-                                   for package in dep_value.get('packages', []):
+                            sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                            # Remove swift-format dep from cipd on macOS until we send a patch upstream.
+                            cd depot_tools
+                            patch gclient.py -R <<'EOF'
+                          676,677c676
+                          <         packages = dep_value.get('packages', [])
+                          <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
+                          ---
+                          >         for package in dep_value.get('packages', []):
                           EOF
+                          fi
+
 
                           echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
                           export PATH="$PATH:/harness/depot_tools"
@@ -940,7 +944,7 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
-                          git clone https://chromium.googlesource.com/chromium/buildtools
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/buildtools"'
                           export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
                           echo $BASH_ENV
