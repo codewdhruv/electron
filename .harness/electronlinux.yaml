@@ -662,6 +662,10 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
+                          cd buildtools
+                          npm install
+
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/buildtools"'
                           export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
                           echo $BASH_ENV
@@ -688,6 +692,8 @@ pipeline:
                               sleep 5
                           done
                           echo "Goma ready"
+
+                          ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
