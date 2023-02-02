@@ -842,7 +842,7 @@ pipeline:
                           export BASH_ENV=$PATH
 
                           SEDOPTION="-i"
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=src/DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
                           cipd ensure --root src/third_party/ninja -ensure-file ninja_ensure_file
 
