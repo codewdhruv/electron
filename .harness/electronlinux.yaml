@@ -704,7 +704,7 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
-                          git clone --depth=1 https://github.com/ninja-build/ninja.git
+                          git clone --depth=1 git clone https://fuchsia.googlesource.com/third_party/ninja.git
                           ls
                           cd ninja
                       when:
