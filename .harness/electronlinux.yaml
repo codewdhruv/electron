@@ -686,10 +686,6 @@ pipeline:
                               sleep 5
                           done
                           echo "Goma ready"
-
-                          ls
-                          cd build-tools
-                          ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
@@ -846,32 +842,14 @@ pipeline:
                           export BASH_ENV=$PATH
 
                           SEDOPTION="-i"
-                          if [ "`uname`" == "Darwin" ]; then
-                            SEDOPTION="-i ''"
-                            # Fix Clang Install (wrong binary)
-                            rm -rf src/third_party/llvm-build
-                            python3 src/tools/clang/scripts/update.py
-
-                            # Fix esbuild (wrong binary)
-                            echo 'infra/3pp/tools/esbuild/${platform}' `gclient getdep --deps-file=src/third_party/devtools-frontend/src/DEPS -r 'third_party/esbuild:infra/3pp/tools/esbuild/${platform}'` > esbuild_ensure_file
-                            # Remove extra output from calling gclient getdep which always calls update_depot_tools
-                            sed -i '' "s/Updating depot_tools... //g" esbuild_ensure_file
-                            cipd ensure --root src/third_party/devtools-frontend/src/third_party/esbuild -ensure-file esbuild_ensure_file
-                          fi
-
-                          # Make sure we are using the right ninja
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'depot_tools/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=src/DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure --root depot_tools/ninja -ensure-file ninja_ensure_file
+                          cipd ensure --root src/third_party/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
-                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
-                          export PATH="$PATH:/harness/depot_tools/ninja"
-                          echo $BASH_ENV
-                          export BASH_ENV=$PATH
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' >> $BASH_ENV
 
-
-                          cd depot_tools/angle
+                          cd src/third_party/angle
                           rm .git/objects/info/alternates
                           git remote set-url origin https://chromium.googlesource.com/angle/angle.git
                           cp .git/config .git/config.backup
