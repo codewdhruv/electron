@@ -901,6 +901,317 @@ pipeline:
                       when:
                         stageStatus: All
                       failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Strip electron binaries
+                      identifier: Strip_electron_binaries
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "$STRIP_BINARIES" == "true" ] && [ "`uname`" == "Linux" ]; then
+                            if [ x"$TARGET_ARCH" == x ]; then
+                              target_cpu=x64
+                            else
+                              target_cpu="$TARGET_ARCH"
+                            fi
+                            cd src
+                            script/copy-debug-symbols.py --target-cpu="$target_cpu" --out-dir=out/Default/debug --compress
+                            script/strip-binaries.py --target-cpu="$target_cpu"
+                            script/add-debug-link.py --target-cpu="$target_cpu" --debug-dir=out/Default/debug
+                          fi
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Build dist zip
+                      identifier: Build_dist_zip
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          cd 
+                          if [ "$SKIP_DIST_ZIP" != "1" ]; then
+                            ninja -C out/Default electron:electron_dist_zip shell_browser_ui_unittests third_party/electron_node:headers third_party/electron_node:overlapped-checker electron:hunspell_dictionaries_zip -j $NUMBER_OF_NINJA_PROCESSES
+                            if [ "$CHECK_DIST_MANIFEST" == "1" ]; then
+                              if [ "`uname`" == "Darwin" ]; then
+                                target_os=mac
+                                target_cpu=x64
+                                if [ x"$MAS_BUILD" == x"true" ]; then
+                                  target_os=mac_mas
+                                fi
+                                if [ "$TARGET_ARCH" == "arm64" ]; then
+                                  target_cpu=arm64
+                                fi
+                              elif [ "`uname`" == "Linux" ]; then
+                                target_os=linux
+                                if [ x"$TARGET_ARCH" == x ]; then
+                                  target_cpu=x64
+                                else
+                                  target_cpu="$TARGET_ARCH"
+                                fi
+                              else
+                                echo "Unknown system: `uname`"
+                                exit 1
+                              fi
+                              script/zip_manifests/check-zip-manifest.py out/Default/dist.zip electron/script/zip_manifests/dist_zip.$target_os.$target_cpu.manifest
+                            fi
+                          fi
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Check goma stats after build
+                      identifier: Check_goma_stats_after_build
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash
+                          set +e
+                          set +o pipefail
+                          $LOCAL_GOMA_DIR/goma_ctl.py stat
+                          $LOCAL_GOMA_DIR/diagnose_goma_log.py
+                          true
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: mksnapshot build
+                      identifier: mksnapshot_build
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+
+                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" != "1" ]; then
+                            ninja -C out/Default electron:electron_mksnapshot -j $NUMBER_OF_NINJA_PROCESSES
+                            gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
+                            # Remove unused args from mksnapshot_args
+                            SEDOPTION="-i"
+                            if [ "`uname`" == "Darwin" ]; then
+                              SEDOPTION="-i ''"
+                            fi
+                            sed $SEDOPTION '/.*builtins-pgo/d' out/Default/mksnapshot_args
+                            sed $SEDOPTION '/--turbo-profiling-input/d' out/Default/mksnapshot_args
+                          fi
+                          if [ "`uname`" != "Darwin" ]; then
+                            if [ "$TARGET_ARCH" == "arm" ]; then
+                              script/strip-binaries.py --file $PWD/out/Default/clang_x86_v8_arm/mksnapshot
+                              script/strip-binaries.py --file $PWD/out/Default/clang_x86_v8_arm/v8_context_snapshot_generator
+                            elif [ "$TARGET_ARCH" == "arm64" ]; then
+                              script/strip-binaries.py --file $PWD/out/Default/clang_x64_v8_arm64/mksnapshot
+                              script/strip-binaries.py --file $PWD/out/Default/clang_x64_v8_arm64/v8_context_snapshot_generator
+                            else
+                              script/strip-binaries.py --file $PWD/out/Default/mksnapshot
+                              script/strip-binaries.py --file $PWD/out/Default/v8_context_snapshot_generator
+                            fi
+                          fi
+                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" != "1" ] && [ "$SKIP_DIST_ZIP" != "1" ]; then
+                            ninja -C out/Default electron:electron_mksnapshot_zip -j $NUMBER_OF_NINJA_PROCESSES
+                            (cd out/Default; zip mksnapshot.zip mksnapshot_args gen/v8/embedded.S)
+                          fi
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Generate cross arch snapshots
+                      identifier: Generate_cross_arch_snapshots
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "$GENERATE_CROSS_ARCH_SNAPSHOT" == "true" ] && [ -z "$CIRCLE_PR_NUMBER" ]; then
+                            cd src
+                            if [ "$TARGET_ARCH" == "arm" ]; then
+                              export MKSNAPSHOT_PATH="clang_x86_v8_arm"
+                            elif [ "$TARGET_ARCH" == "arm64" ]; then
+                              export MKSNAPSHOT_PATH="clang_x64_v8_arm64"
+                            fi
+                            cp "out/Default/$MKSNAPSHOT_PATH/mksnapshot" out/Default        
+                            cp "out/Default/$MKSNAPSHOT_PATH/v8_context_snapshot_generator" out/Default
+                            if [ "`uname`" == "Linux" ]; then
+                              cp "out/Default/$MKSNAPSHOT_PATH/libffmpeg.so" out/Default
+                            elif [ "`uname`" == "Darwin" ]; then
+                              cp "out/Default/$MKSNAPSHOT_PATH/libffmpeg.dylib" out/Default
+                            fi
+                            python electron/script/verify-mksnapshot.py --source-root "$PWD" --build-dir out/Default --create-snapshot-only
+                            mkdir cross-arch-snapshots
+                            cp out/Default-mksnapshot-test/*.bin cross-arch-snapshots
+                            # Clean up so that ninja does not get confused
+                            if [ "`uname`" == "Linux" ]; then
+                              rm -f out/Default/libffmpeg.so
+                            elif [ "`uname`" == "Darwin" ]; then
+                              rm -f out/Default/libffmpeg.dylib
+                            fi
+                          fi
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Build chromedriver
+                      identifier: Build_chromedriver
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+
+                          if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
+                            gn gen out/chromedriver --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") is_component_ffmpeg=false proprietary_codecs=false $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
+                            export CHROMEDRIVER_DIR="out/chromedriver"
+                          else
+                            export CHROMEDRIVER_DIR="out/Default"
+                          fi
+                          ninja -C $CHROMEDRIVER_DIR electron:electron_chromedriver -j $NUMBER_OF_NINJA_PROCESSES
+                          if [ "`uname`" == "Linux" ]; then
+                            electron/script/strip-binaries.py --target-cpu="$TARGET_ARCH" --file $PWD/$CHROMEDRIVER_DIR/chromedriver
+                          fi
+                          ninja -C $CHROMEDRIVER_DIR electron:electron_chromedriver_zip
+                          if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
+                            cp out/chromedriver/chromedriver.zip out/Default
+                          fi
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: ffmpeg GN gen
+                      identifier: ffmpeg_GN_gen
+                      spec:
+                        shell: Sh
+                        command: |
+                          gn gen out/ffmpeg --args="import(\"/build/args/ffmpeg.gn\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Non proprietary ffmpeg build
+                      identifier: Non_proprietary_ffmpeg_build
+                      spec:
+                        shell: Sh
+                        command: |
+                          ninja -C out/ffmpeg electron:electron_ffmpeg_zip -j $NUMBER_OF_NINJA_PROCESSES
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Generate breakpad symbols
+                      identifier: Generate_breakpad_symbols
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "$GENERATE_SYMBOLS" == "true" ]; then
+                            ninja -C out/Default electron:electron_symbols
+                          fi
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Zip symbols
+                      identifier: Zip_symbols
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+
+                          export BUILD_PATH="$PWD/out/Default"
+                          ninja -C out/Default electron:licenses
+                          ninja -C out/Default electron:electron_version_file
+                          script/zip-symbols.py -b $BUILD_PATH
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Move all generated artifacts to upload folder
+                      identifier: Move_all_generated_artifacts_to_upload_folder
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          rm -rf generated_artifacts_linux-x64
+                          mkdir generated_artifacts_linux-x64
+                          mv_if_exist() {
+                            if [ -f "$1" ] || [ -d "$1" ]; then
+                              echo Storing $1
+                              mv $1 generated_artifacts_linux-x64
+                            else
+                              echo Skipping $1 - It is not present on disk
+                            fi
+                          }
+                          cp_if_exist() {
+                            if [ -f "$1" ] || [ -d "$1" ]; then
+                              echo Storing $1
+                              cp $1 generated_artifacts_linux-x64
+                            else
+                              echo Skipping $1 - It is not present on disk
+                            fi
+                          }
+                          mv_if_exist src/out/Default/dist.zip
+                          mv_if_exist src/out/Default/gen/node_headers.tar.gz
+                          mv_if_exist src/out/Default/symbols.zip
+                          mv_if_exist src/out/Default/mksnapshot.zip
+                          mv_if_exist src/out/Default/chromedriver.zip
+                          mv_if_exist src/out/ffmpeg/ffmpeg.zip
+                          mv_if_exist src/out/Default/hunspell_dictionaries.zip
+                          mv_if_exist src/cross-arch-snapshots
+                          cp_if_exist src/out/electron_ninja_log
+                          cp_if_exist src/out/Default/.ninja_log
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: GCSUpload
+                      name: Upload Artifacts to GCS_1
+                      identifier: UploadArtifactstoGCS_1
+                      spec:
+                        connectorRef: gcpdhruba
+                        bucket: test-electron
+                        sourcePath: generated_artifacts_linux-x64
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Remove unused data
+                      identifier: Remove_unused_data
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          rm -rf src/android_webview
+                          rm -rf src/ios/chrome
+                          rm -rf src/third_party/blink/web_tests
+                          rm -rf src/third_party/blink/perf_tests
+                          rm -rf third_party/electron_node/deps/openssl
+                          rm -rf third_party/electron_node/deps/v8
+                          rm -rf chrome/test/data/xr/webvr_info
+                          rm -rf src/third_party/angle/third_party/VK-GL-CTS/src
+                          rm -rf src/third_party/swift-toolchain
+                          rm -rf src/third_party/swiftshader/tests/regres/testlists
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: rm rf
+                      identifier: rm_rf
+                      spec:
+                        shell: Sh
+                        command: |
+                          rm -rf third_party/electron_node/deps/openssl
+                          rm -rf third_party/electron_node/deps/v8
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
             when:
               pipelineStatus: All
         - stage:
