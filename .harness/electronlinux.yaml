@@ -662,6 +662,8 @@ pipeline:
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
                           ls
+                          cd depot_tools
+                          ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
