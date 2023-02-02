@@ -1954,6 +1954,13 @@ pipeline:
                       failureStrategies: []
                   - step:
                       type: Run
+                      name: Run_33
+                      identifier: Run_33
+                      spec:
+                        shell: Sh
+                        command: echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"'
+                  - step:
+                      type: Run
                       name: Fix SYNC
                       identifier: Fix_SYNC
                       spec:
@@ -1974,7 +1981,7 @@ pipeline:
                           cipd ensure --root src/third_party/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
-                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' >> $BASH_ENV
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
 
                           cd src/third_party/angle
                           rm .git/objects/info/alternates
