@@ -1959,6 +1959,9 @@ pipeline:
                       spec:
                         shell: Sh
                         command: echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"'
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
                   - step:
                       type: Run
                       name: Fix SYNC
@@ -2026,13 +2029,14 @@ pipeline:
                       identifier: Default_GN_gen
                       spec:
                         shell: Sh
-                        command: |
+                        command: |-
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src"'
                           export CHROMIUM_BUILDTOOLS_PATH="/harness/src"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
-                          gn gen out/Default --args="import(\"build/args/testing.gn\") import(\"$GN_GOMA_FILE\") 'target_cpu = "arm64" fatal_linker_warnings = false enable_linux_installer = false' 'enable_run_as_node = false'"
+                          cd src
+                          gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //build/args/testing.gn
