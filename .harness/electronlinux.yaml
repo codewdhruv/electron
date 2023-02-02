@@ -602,6 +602,12 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
+                          #!/bin/bash -eo pipefail
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
                           gclient runhooks --spec="solutions=[{'name':'','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
