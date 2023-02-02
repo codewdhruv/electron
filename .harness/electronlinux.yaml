@@ -799,6 +799,16 @@ pipeline:
                       failureStrategies: []
                   - step:
                       type: Run
+                      name: Run_36
+                      identifier: Run_36
+                      spec:
+                        shell: Sh
+                        command: echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"'
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
                       name: Run_33
                       identifier: Run_33
                       spec:
