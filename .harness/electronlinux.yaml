@@ -944,10 +944,15 @@ pipeline:
                         command: |-
                           #!/bin/bash -eo pipefail
                           git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
+                          cd buildtools
+                          npm install
+
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/buildtools"'
                           export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+
+
 
                           gn gen out/Testing --args="import(\"build/args/testing.gn\")"
                         envVariables:
