@@ -690,10 +690,23 @@ pipeline:
                           cd third_party
                           npm install
 
-                          echo 'export NINJA_BUILDTOOLS_PATH="'"$PWD"'/third_party"'
-                          export NINJA_BUILDTOOLS_PATH="/harness/third_party"
+                          echo 'export THIRD_BUILDTOOLS_PATH="'"$PWD"'/third_party"'
+                          export THIRD_BUILDTOOLS_PATH="/harness/third_party"
                           echo $BASH_ENV
-                          export BASH_ENV=$NINJA_BUILDTOOLS_PATH
+                          export BASH_ENV=$THIRD_BUILDTOOLS_PATH
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_39
+                      identifier: Run_39
+                      spec:
+                        shell: Sh
+                        command: |-
+                          git clone --depth=1 https://github.com/ninja-build/ninja.git
+                          ls
+                          cd ninja
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -904,6 +917,8 @@ pipeline:
 
                           gclient config http://src.chromium.org/svn/trunk/src
                           gclient runhooks
+
+                          gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'
 
 
                           SEDOPTION="-i"
