@@ -702,6 +702,9 @@ pipeline:
                           git clone --depth=1 https://chromium.googlesource.com/infra.git
                           cd infra
                           npm install
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
                   - step:
                       type: Run
                       name: Wait for GOMA
