@@ -689,6 +689,11 @@ pipeline:
                           git clone --depth=1 https://chromium.googlesource.com/chromium/src/third_party.git
                           cd third_party
                           npm install
+
+                          echo 'export NINJA_BUILDTOOLS_PATH="'"$PWD"'/third_party"'
+                          export NINJA_BUILDTOOLS_PATH="/harness/third_party"
+                          echo $BASH_ENV
+                          export BASH_ENV=$NINJA_BUILDTOOLS_PATH
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1014,10 +1019,10 @@ pipeline:
                         command: |-
                           #!/bin/bash -eo pipefail
 
-                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                          export PATH="$PATH:/harness/depot_tools"
+                          echo 'export NINJA_BUILDTOOLS_PATH="'"$PWD"'/third_party"'
+                          export NINJA_BUILDTOOLS_PATH="/harness/third_party"
                           echo $BASH_ENV
-                          export BASH_ENV=$PATH
+                          export BASH_ENV=$NINJA_BUILDTOOLS_PATH
 
                             ninja -C out/Default electron:electron_mksnapshot_zip -j 34
                             ninja -C out/Default tools/v8_context_snapshot -j 34
