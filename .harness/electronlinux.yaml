@@ -473,7 +473,6 @@ pipeline:
                           ---
                           >         for package in dep_value.get('packages', []):
                           EOF
-                          fi
 
 
                           echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
