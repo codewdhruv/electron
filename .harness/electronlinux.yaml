@@ -627,7 +627,7 @@ pipeline:
                         command: |-
                           node script/generate-deps-hash.js && cat .depshash-target
 
-                          cd src/
+                          cd build-tools/src/
                           ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
@@ -799,6 +799,13 @@ pipeline:
                       failureStrategies: []
                   - step:
                       type: Run
+                      name: Run_33
+                      identifier: Run_33
+                      spec:
+                        shell: Sh
+                        command: gclient getdep --deps-file=DEPS -r 'depot_tools/ninja:infra/3pp/tools/ninja/${platform}'
+                  - step:
+                      type: Run
                       name: Fix SYNC
                       identifier: Fix_SYNC
                       spec:
@@ -828,7 +835,7 @@ pipeline:
                           # Make sure we are using the right ninja
                           echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'depot_tools/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure depot_tools/ninja -ensure-file ninja_ensure_file
+                          cipd ensure --root depot_tools/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
                           echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' >> $BASH_ENV
