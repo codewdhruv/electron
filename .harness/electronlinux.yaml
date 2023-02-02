@@ -564,7 +564,7 @@ pipeline:
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
-                          if [ ! -d "src/third_party/blink" ]; then
+                          if [ ! -d "depot_tools/third_party/blink" ]; then
                             echo src cache was not restored for some reason, idk what happened here...
                             exit 1
                           fi
