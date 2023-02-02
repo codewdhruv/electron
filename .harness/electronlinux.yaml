@@ -820,7 +820,11 @@ pipeline:
                       identifier: Run_34
                       spec:
                         shell: Sh
-                        command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
+                        command: |-
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
+
+                          cd harness/depot_tools/
+                          ls
                       when:
                         stageStatus: All
                       failureStrategies: []
