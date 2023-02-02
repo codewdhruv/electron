@@ -803,7 +803,10 @@ pipeline:
                       identifier: Run_36
                       spec:
                         shell: Sh
-                        command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
+                        command: |
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
+
+                            python3 scripts/update.py
                       when:
                         stageStatus: All
                       failureStrategies: []
