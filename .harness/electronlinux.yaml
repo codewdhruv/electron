@@ -920,6 +920,12 @@ pipeline:
                             script/strip-binaries.py --target-cpu="$target_cpu"
                             script/add-debug-link.py --target-cpu="$target_cpu" --debug-dir=out/Default/debug
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -958,6 +964,12 @@ pipeline:
                               script/zip_manifests/check-zip-manifest.py out/Default/dist.zip electron/script/zip_manifests/dist_zip.$target_os.$target_cpu.manifest
                             fi
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -974,6 +986,12 @@ pipeline:
                           $LOCAL_GOMA_DIR/goma_ctl.py stat
                           $LOCAL_GOMA_DIR/diagnose_goma_log.py
                           true
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1013,6 +1031,12 @@ pipeline:
                             ninja -C out/Default electron:electron_mksnapshot_zip -j $NUMBER_OF_NINJA_PROCESSES
                             (cd out/Default; zip mksnapshot.zip mksnapshot_args gen/v8/embedded.S)
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1048,6 +1072,12 @@ pipeline:
                               rm -f out/Default/libffmpeg.dylib
                             fi
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1074,6 +1104,12 @@ pipeline:
                           if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
                             cp out/chromedriver/chromedriver.zip out/Default
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1085,6 +1121,12 @@ pipeline:
                         shell: Sh
                         command: |
                           gn gen out/ffmpeg --args="import(\"/build/args/ffmpeg.gn\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS"
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1096,6 +1138,12 @@ pipeline:
                         shell: Sh
                         command: |
                           ninja -C out/ffmpeg electron:electron_ffmpeg_zip -j $NUMBER_OF_NINJA_PROCESSES
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1110,6 +1158,12 @@ pipeline:
                           if [ "$GENERATE_SYMBOLS" == "true" ]; then
                             ninja -C out/Default electron:electron_symbols
                           fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1126,6 +1180,12 @@ pipeline:
                           ninja -C out/Default electron:licenses
                           ninja -C out/Default electron:electron_version_file
                           script/zip-symbols.py -b $BUILD_PATH
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1165,6 +1225,12 @@ pipeline:
                           mv_if_exist src/cross-arch-snapshots
                           cp_if_exist src/out/electron_ninja_log
                           cp_if_exist src/out/Default/.ninja_log
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1197,6 +1263,12 @@ pipeline:
                           rm -rf src/third_party/angle/third_party/VK-GL-CTS/src
                           rm -rf src/third_party/swift-toolchain
                           rm -rf src/third_party/swiftshader/tests/regres/testlists
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1209,6 +1281,12 @@ pipeline:
                         command: |
                           rm -rf third_party/electron_node/deps/openssl
                           rm -rf third_party/electron_node/deps/v8
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
                       failureStrategies: []
