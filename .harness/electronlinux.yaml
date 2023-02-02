@@ -608,7 +608,7 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-                          gclient runhooks --spec="solutions=[{'name':'','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
+                          gclient runhooks --spec="solutions=[{'name':'test','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
@@ -803,7 +803,14 @@ pipeline:
                       identifier: Run_33
                       spec:
                         shell: Sh
-                        command: gclient getdep --deps-file=DEPS -r 'depot_tools/ninja:infra/3pp/tools/ninja/${platform}'
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
+                          gclient getdep --deps-file=DEPS -r 'depot_tools/ninja:infra/3pp/tools/ninja/${platform}'
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -813,7 +820,7 @@ pipeline:
                       identifier: Run_34
                       spec:
                         shell: Sh
-                        command: echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"'
+                        command: echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -851,7 +858,11 @@ pipeline:
                           cipd ensure --root depot_tools/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
-                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' >> $BASH_ENV
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
+                          export PATH="$PATH:/harness/depot_tools/ninja"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
 
                           cd depot_tools/angle
                           rm .git/objects/info/alternates
