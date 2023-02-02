@@ -472,6 +472,11 @@ pipeline:
                           ---
                           >         for package in dep_value.get('packages', []):
                           EOF
+
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
@@ -617,11 +622,7 @@ pipeline:
                       identifier: Generate_DEPS_hash
                       spec:
                         shell: Sh
-                        command: |-
-                          node script/generate-deps-hash.js && cat .depshash-target
-
-                          cd build-tools/src/
-                          ls
+                        command: node script/generate-deps-hash.js && cat .depshash-target
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
