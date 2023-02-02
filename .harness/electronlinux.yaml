@@ -1985,10 +1985,14 @@ pipeline:
 
                           # Explicitly add ninja to the path
                           echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
 
-                          cd src/third_party/angle
-                          rm .git/objects/info/alternates
-                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
+
+                          cd src/third_party
+                          git clone https://chromium.googlesource.com/angle/angle.git
+                          cd angle
                           cp .git/config .git/config.backup
                           git remote remove origin
                           mv .git/config.backup .git/config
