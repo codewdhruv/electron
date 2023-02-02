@@ -804,6 +804,19 @@ pipeline:
                       spec:
                         shell: Sh
                         command: gclient getdep --deps-file=DEPS -r 'depot_tools/ninja:infra/3pp/tools/ninja/${platform}'
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_34
+                      identifier: Run_34
+                      spec:
+                        shell: Sh
+                        command: echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"'
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
                   - step:
                       type: Run
                       name: Fix SYNC
