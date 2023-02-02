@@ -564,7 +564,7 @@ pipeline:
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
-                          if [ ! -d "depot_tools/third_party/blink" ]; then
+                          if [ ! -d "build_tools/third_party/blink" ]; then
                             echo src cache was not restored for some reason, idk what happened here...
                             exit 1
                           fi
@@ -602,7 +602,7 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
-                          gclient runhooks --spec="solutions=[{'name':'src/electron','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
+                          gclient runhooks --spec="solutions=[{'name':'','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
@@ -706,7 +706,7 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
-                          if [ "`uname`" == "Darwin" ]; then
+                          if [ "uname" == "Darwin" ]; then
                             sudo mkdir -p $TMPDIR/del-target
 
                             tmpify() {
