@@ -608,7 +608,7 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-                          gclient runhooks --spec="solutions=[{'name':'test','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
+                          gclient runhooks --spec="solutions=[{'name':'src/electron','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
