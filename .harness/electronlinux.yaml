@@ -662,8 +662,8 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"'
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/buildtools"'
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
                         envVariables:
