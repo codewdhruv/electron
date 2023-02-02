@@ -823,7 +823,7 @@ pipeline:
                         command: |-
                           echo 'export PATH="$PATH:'"$PWD"'/depot_tools/ninja"'
 
-                          cd harness/depot_tools
+                          cd depot_tools
                           ls
                       when:
                         stageStatus: All
