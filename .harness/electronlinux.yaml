@@ -624,7 +624,11 @@ pipeline:
                       identifier: Generate_DEPS_hash
                       spec:
                         shell: Sh
-                        command: node script/generate-deps-hash.js && cat .depshash-target
+                        command: |-
+                          node script/generate-deps-hash.js && cat .depshash-target
+
+                          cd src
+                          ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
