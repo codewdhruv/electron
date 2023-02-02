@@ -672,7 +672,7 @@ pipeline:
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
                           ls
-                          cd depot_tools/third_party/
+                          cd build-tools/third_party/
                           ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
