@@ -1823,7 +1823,7 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
-                          git clone --depth=1 git clone https://chromium.googlesource.com/chromium/src.git
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/src.git
                           cd src
                           npm install
 
