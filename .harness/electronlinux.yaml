@@ -688,7 +688,7 @@ pipeline:
                           echo "Goma ready"
 
                           ls
-                          cd build_tools
+                          cd build-tools
                           ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
