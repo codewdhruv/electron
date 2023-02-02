@@ -858,7 +858,8 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-                          gclient sync
+                          gclient config http://src.chromium.org/svn/trunk/src
+                          gclient runhooks
 
 
                           SEDOPTION="-i"
