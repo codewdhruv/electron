@@ -858,6 +858,9 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
+                          gclient sync
+
+
                           SEDOPTION="-i"
                           echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
