@@ -684,6 +684,9 @@ pipeline:
                               sleep 5
                           done
                           echo "Goma ready"
+
+                          cd depot-tools
+                          ls
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
