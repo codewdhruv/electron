@@ -1462,6 +1462,1167 @@ pipeline:
             when:
               pipelineStatus: All
         - stage:
+            name: linux-x64-testing-test
+            identifier: linuxx64testingtest
+            description: ""
+            type: CI
+            spec:
+              cloneCodebase: true
+              platform:
+                os: Linux
+                arch: Amd64
+              runtime:
+                type: Cloud
+                spec: {}
+              execution:
+                steps:
+                  - step:
+                      type: Run
+                      name: Install gnu-tar on macos
+                      identifier: Install_gnutar_on_macos
+                      spec:
+                        shell: Bash
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "`uname`" == "Darwin" ]; then
+                            if [ ! -d /usr/local/Cellar/gnu-tar/ ]; then
+                              brew update
+                              brew install gnu-tar
+                            fi
+                            ln -fs /usr/local/bin/gtar /usr/local/bin/tar
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: Success
+                        condition: "false"
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Install python2 on mac
+                      identifier: Install_python2_on_mac
+                      spec:
+                        shell: Bash
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
+                            if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
+                              mkdir python-downloads
+                              echo 'Downloading Python 2.7.18'
+                              curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                              mv python-2.7.18-macosx10.9.pkg python-downloads
+                            else
+                              echo 'Using Python install from cache'
+                            fi
+                            sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                  - step:
+                      type: SaveCacheGCS
+                      name: Persisting python cache
+                      identifier: Persisting_python_cache
+                      spec:
+                        connectorRef: gcpdhruba
+                        bucket: test-electron
+                        key: v2.7.18-python-cache-{{ arch }}
+                        sourcePaths:
+                          - python-downloads
+                        archiveFormat: Tar
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: SaveCacheGCS
+                      name: Persisting brew cache
+                      identifier: Persisting_brew_cache
+                      spec:
+                        connectorRef: gcpdhruba
+                        bucket: test-electron
+                        key: v5-brew-cache-{{ arch }}
+                        sourcePaths:
+                          - /usr/local/Cellar/gnu-tar
+                          - /usr/local/bin/gtar
+                        archiveFormat: Tar
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Setup Goma
+                      identifier: Setup_Goma
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/sh
+
+                          echo 'export NUMBER_OF_NINJA_PROCESSES=300' 
+                          export GOMA_FALLBACK_ON_AUTH_FAILURE=true
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+                          if [ "`uname`" = "Darwin" ]; then
+                            echo 'ulimit -n 10000'
+                            echo 'sudo launchctl limit maxfiles 65536 200000' >> $BASH_ENV
+                          fi
+
+                          if [ ! -z "$RAW_GOMA_AUTH" ]; then
+                            echo $RAW_GOMA_AUTH > ~/.goma_oauth2_config
+                          fi
+
+                          git clone https://github.com/electron/build-tools.git
+                          cd build-tools
+                          npm install
+                          mkdir third_party
+                          node -e "require('./src/utils/goma.js').downloadAndPrepare({ gomaOneForAll: true })"
+                          export GOMA_FALLBACK_ON_AUTH_FAILURE=true
+                          third_party/goma/goma_ctl.py ensure_start
+
+                          if [ ! -z "$RAW_GOMA_AUTH" ] && [ "`third_party/goma/goma_auth.py info`" != "Login as Fermi Planck" ]; then
+                            echo "WARNING!!!!!! Goma authentication is incorrect; please update Goma auth token."
+                            exit 1
+                          fi
+
+                          echo 'export GN_GOMA_FILE='`node -e "console.log(require('./src/utils/goma.js').gnFilePath)"` 
+                          export GN_GOMA_FILE=/harness/build-tools/third_party/goma.gn
+                          echo $BASH_ENV
+                          export BASH_ENV=$GN_GOMA_FILE
+
+                          echo 'export LOCAL_GOMA_DIR='`node -e "console.log(require('./src/utils/goma.js').dir)"` 
+                          export LOCAL_GOMA_DIR=/harness/build-tools/third_party/goma
+                          echo $BASH_ENV
+                          export BASH_ENV=$LOCAL_GOMA_DIR
+
+                          echo 'export GOMA_FALLBACK_ON_AUTH_FAILURE=true' 
+                          export GOMA_FALLBACK_ON_AUTH_FAILURE=true
+                          echo $BASH_ENV
+                          export BASH_ENV=$GOMA_FALLBACK_ON_AUTH_FAILURE
+
+
+                          touch "${TMPDIR:=/tmp}"/.goma-ready
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Get depot tools
+                      identifier: Run_4
+                      spec:
+                        shell: Sh
+                        command: |-
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+                            sed -i '/ninjalog_uploader_wrapper.py/d' ./depot_tools/autoninja
+                            # Remove swift-format dep from cipd on macOS until we send a patch upstream.
+                            cd depot_tools
+                            patch gclient.py -R <<'EOF'
+                          676,677c676
+                          <         packages = dep_value.get('packages', [])
+                          <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
+                          ---
+                          >         for package in dep_value.get('packages', []):
+                          EOF
+
+
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Generate deps hash
+                      identifier: Generate_deps_hash
+                      spec:
+                        shell: Sh
+                        command: node script/generate-deps-hash.js && cat .depshash-target
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Prepare for cross OS sync restore
+                      identifier: Prepare_for_cross_OS_sync_restore
+                      spec:
+                        shell: Sh
+                        command: |-
+                          sudo mkdir -p /var/portal
+                          sudo chown -R $(id -u):$(id -g) /var/portal
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: RestoreCacheGCS
+                      name: Restoring cache from src
+                      identifier: Restoring_cache_from_src
+                      spec:
+                        connectorRef: gcpdhruba
+                        bucket: test-electron
+                        key: v16-src-cache-{{ checksum ".depshash" }}
+                        archiveFormat: Tar
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Fix the src cache restore point on mac
+                      identifier: Fix_the_src_cache_restore_point_on_mac
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ -d "/var/portal/src" ]; then
+                            echo Relocating Cache
+                            rm -rf src
+                            mv /var/portal/src ./
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Ensure src checkout worked
+                      identifier: Ensure_src_checkout_worked
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          if [ ! -d "build_tools/third_party/blink" ]; then
+                            echo src cache was not restored for some reason, idk what happened here...
+                            exit 1
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Wipe electron
+                      identifier: Wipe_electron
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          rm -rf src/electron
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run electron only hooks
+                      identifier: Run_electron_only_hooks
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
+                          gclient runhooks --spec="solutions=[{'name':'src/electron','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Generate DEPS hash
+                      identifier: Generate_DEPS_hash
+                      spec:
+                        shell: Sh
+                        command: node script/generate-deps-hash.js && cat .depshash-target
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Add depot tools to path
+                      identifier: Add_depot_tools_to_path
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Setup ENV variables
+                      identifier: Setup_ENV_variables
+                      spec:
+                        shell: Sh
+                        command: |-
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
+                          cd buildtools
+                          npm install
+
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/buildtools"'
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_37
+                      identifier: Run_37
+                      spec:
+                        shell: Sh
+                        command: |-
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/src/third_party.git
+                          cd third_party
+                          npm install
+
+                          echo 'export THIRD_BUILDTOOLS_PATH="'"$PWD"'/third_party"'
+                          export THIRD_BUILDTOOLS_PATH="/harness/third_party"
+                          echo $BASH_ENV
+                          export BASH_ENV=$THIRD_BUILDTOOLS_PATH
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_39
+                      identifier: Run_39
+                      spec:
+                        shell: Sh
+                        command: |-
+                          git clone --depth=1 git clone https://fuchsia.googlesource.com/third_party/ninja.git
+                          ls
+                          cd ninja
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_38
+                      identifier: Run_38
+                      spec:
+                        shell: Sh
+                        command: |-
+                          git clone --depth=1 https://chromium.googlesource.com/infra.git
+                          cd infra
+                          npm install
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Wait for GOMA
+                      identifier: Wait_for_GOMA
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          until [ -f "${TMPDIR:=/tmp}"/.goma-ready ]
+                          do
+                              sleep 5
+                          done
+                          echo "Goma ready"
+
+                          ls
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Free up space on MacOS
+                      identifier: Free_up_space_on_MacOS
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "uname" == "Darwin" ]; then
+                            sudo mkdir -p $TMPDIR/del-target
+
+                            tmpify() {
+                              if [ -d "$1" ]; then
+                                sudo mv "$1" $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
+                              fi
+                            }
+
+                            strip_arm_deep() {
+                              opwd=$(pwd)
+                              cd $1
+                              f=$(find . -perm +111 -type f)
+                              for fp in $f
+                              do
+                                if [[ $(file "$fp") == *"universal binary"* ]]; then
+                                  if [[ $(file "$fp") == *"arm64e)"* ]]; then
+                                    sudo lipo -remove arm64e "$fp" -o "$fp" || true
+                                  fi
+                                  if [[ $(file "$fp") == *"arm64)"* ]]; then
+                                    sudo lipo -remove arm64 "$fp" -o "$fp" || true
+                                  fi
+                                fi
+                              done
+
+                              cd $opwd
+                            }
+
+                            tmpify /Library/Developer/CoreSimulator
+                            tmpify ~/Library/Developer/CoreSimulator
+                            tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
+                            tmpify $(xcode-select -p)/Platforms/iPhoneOS.platform
+                            tmpify $(xcode-select -p)/Platforms/WatchOS.platform
+                            tmpify $(xcode-select -p)/Platforms/WatchSimulator.platform
+                            tmpify $(xcode-select -p)/Platforms/AppleTVSimulator.platform
+                            tmpify $(xcode-select -p)/Platforms/iPhoneSimulator.platform
+                            tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/metal/ios
+                            tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift
+                            tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0
+                            tmpify ~/.rubies
+                            tmpify ~/Library/Caches/Homebrew
+                            tmpify /usr/local/Homebrew
+                            sudo rm -rf $TMPDIR/del-target
+
+                            # sudo rm -rf "/System/Library/Desktop Pictures"
+                            # sudo rm -rf /System/Library/Templates/Data
+                            # sudo rm -rf /System/Library/Speech/Voices
+                            # sudo rm -rf "/System/Library/Screen Savers"
+                            # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs
+                            # sudo rm -rf "/System/Volumes/Data/Library/Application Support/Apple/Photos/Print Products"
+                            # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/
+                            # sudo rm -rf /System/Volumes/Data/Library/Java
+                            # sudo rm -rf /System/Volumes/Data/Library/Ruby
+                            # sudo rm -rf /System/Volumes/Data/Library/Printers
+                            # sudo rm -rf /System/iOSSupport
+                            # sudo rm -rf /System/Applications/*.app
+                            # sudo rm -rf /System/Applications/Utilities/*.app
+                            # sudo rm -rf /System/Library/LinguisticData
+                            # sudo rm -rf /System/Volumes/Data/private/var/db/dyld/*
+                            # sudo rm -rf /System/Library/Fonts/*
+                            # sudo rm -rf /System/Library/PreferencePanes
+                            # sudo rm -rf /System/Library/AssetsV2/*
+                            sudo rm -rf /Applications/Safari.app
+                            sudo rm -rf ~/project/src/build/linux
+                            sudo rm -rf ~/project/src/third_party/catapult/tracing/test_data
+                            sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
+
+                            # lipo off some huge binaries arm64 versions to save space
+                            strip_arm_deep $(xcode-select -p)/../SharedFrameworks
+                            # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_36
+                      identifier: Run_36
+                      spec:
+                        shell: Sh
+                        command: |
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
+                          cd buildtools
+                          npm install
+
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/src/third_party.git
+                          ls
+                          cd third_party
+                          npm install
+
+                          SEDOPTION="-i"
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
+                          cipd ensure --root third_party/ninja -ensure-file ninja_ensure_file
+
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"' 
+
+                          cd third_party/angle
+                          rm .git/objects/info/alternates
+                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
+                          cp .git/config .git/config.backup
+                          git remote remove origin
+                          mv .git/config.backup .git/config
+                          git fetch
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_33
+                      identifier: Run_33
+                      spec:
+                        shell: Sh
+                        command: |-
+                          ls
+                          cd depot_tools/ninja/
+                          ls
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_34
+                      identifier: Run_34
+                      spec:
+                        shell: Sh
+                        command: |-
+                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"'
+
+                          cd depot_tools
+                          ls
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Fix SYNC
+                      identifier: Fix_SYNC
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
+                          gclient config http://src.chromium.org/svn/trunk/src
+                          gclient runhooks
+
+                          gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'
+
+
+                          SEDOPTION="-i"
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
+                          cipd ensure --root third_party/ninja -ensure-file ninja_ensure_file
+
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"' >> $BASH_ENV
+
+                          cd third_party/angle
+                          rm .git/objects/info/alternates
+                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
+                          cp .git/config .git/config.backup
+                          git remote remove origin
+                          mv .git/config.backup .git/config
+                          git fetch
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Run_35
+                      identifier: Run_35
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
+                          SEDOPTION="-i"
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
+                          cipd ensure --root third_party/ninja -ensure-file ninja_ensure_file
+
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'third_party/ninja"' >> $BASH_ENV
+
+                          cd third_party/angle
+                          rm .git/objects/info/alternates
+                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
+                          cp .git/config .git/config.backup
+                          git remote remove origin
+                          mv .git/config.backup .git/config
+                          git fetch
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Delete all git directories for mac deps
+                      identifier: Delete_all_git_directories_for_mac_deps
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          if [ "`uname`" == "Darwin" ]; then
+
+                            ( find . -type d -name ".git" -not -path "./third_party/angle/*" -not -path "./third_party/dawn/*" -not -path "./electron/*" ) | xargs rm -rf
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Default GN gen
+                      identifier: Default_GN_gen
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
+                          cd buildtools
+                          npm install
+
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/buildtools"'
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+
+                          gn gen out/Default --args="import(\"build/args/testing.gn\") import(\"$GN_GOMA_FILE\") 'target_cpu = "arm64" fatal_linker_warnings = false enable_linux_installer = false' 'enable_run_as_node = false'"
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: electron build
+                      identifier: electron_build
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+
+                          export NINJA_BUILDTOOLS_PATH="/harness/third_party/ninja"
+                          echo $BASH_ENV
+                          export BASH_ENV=$NINJA_BUILDTOOLS_PATH
+
+                            ninja -C out/Default electron:electron_mksnapshot_zip -j 34
+                            ninja -C out/Default tools/v8_context_snapshot -j 34
+                            gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
+                            # Remove unused args from mksnapshot_args
+                            SEDOPTION="-i"
+                            sed $SEDOPTION '/.*builtins-pgo/d' out/Default/mksnapshot_args
+                            sed $SEDOPTION '/--turbo-profiling-input/d' out/Default/mksnapshot_args
+                            (cd out/Default; zip mksnapshot.zip mksnapshot_args clang_x64_v8_arm64/gen/v8/embedded.S)
+                            if [ "false" == "true" ]; then
+                              rm -rf out/Default/clang_x64_v8_arm64/gen
+                              rm -rf out/Default/clang_x64_v8_arm64/obj
+                              rm -rf out/Default/clang_x64_v8_arm64/thinlto-cache
+                              rm -rf out/Default/clang_x64/obj
+                              # Regenerate because we just deleted some ninja files
+                              gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
+                            fi
+                            # For x-compiles this will be built to the wrong arch after the context snapshot build
+                            # so we wipe it before re-linking it below
+                            rm -rf out/Default/libffmpeg.dylib
+                          fi
+                          NINJA_SUMMARIZE_BUILD=1 autoninja -C out/Default electron -j $NUMBER_OF_NINJA_PROCESSES
+                          cp out/Default/.ninja_log out/electron_ninja_log
+                          node script/check-symlinks.js
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Strip electron binaries
+                      identifier: Strip_electron_binaries
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "$STRIP_BINARIES" == "true" ] && [ "`uname`" == "Linux" ]; then
+                            if [ x"$TARGET_ARCH" == x ]; then
+                              target_cpu=x64
+                            else
+                              target_cpu="$TARGET_ARCH"
+                            fi
+                            cd src
+                            script/copy-debug-symbols.py --target-cpu="$target_cpu" --out-dir=out/Default/debug --compress
+                            script/strip-binaries.py --target-cpu="$target_cpu"
+                            script/add-debug-link.py --target-cpu="$target_cpu" --debug-dir=out/Default/debug
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Build dist zip
+                      identifier: Build_dist_zip
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          cd 
+                          if [ "$SKIP_DIST_ZIP" != "1" ]; then
+                            ninja -C out/Default electron:electron_dist_zip shell_browser_ui_unittests third_party/electron_node:headers third_party/electron_node:overlapped-checker electron:hunspell_dictionaries_zip -j $NUMBER_OF_NINJA_PROCESSES
+                            if [ "$CHECK_DIST_MANIFEST" == "1" ]; then
+                              if [ "`uname`" == "Darwin" ]; then
+                                target_os=mac
+                                target_cpu=x64
+                                if [ x"$MAS_BUILD" == x"true" ]; then
+                                  target_os=mac_mas
+                                fi
+                                if [ "$TARGET_ARCH" == "arm64" ]; then
+                                  target_cpu=arm64
+                                fi
+                              elif [ "`uname`" == "Linux" ]; then
+                                target_os=linux
+                                if [ x"$TARGET_ARCH" == x ]; then
+                                  target_cpu=x64
+                                else
+                                  target_cpu="$TARGET_ARCH"
+                                fi
+                              else
+                                echo "Unknown system: `uname`"
+                                exit 1
+                              fi
+                              script/zip_manifests/check-zip-manifest.py out/Default/dist.zip electron/script/zip_manifests/dist_zip.$target_os.$target_cpu.manifest
+                            fi
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Check goma stats after build
+                      identifier: Check_goma_stats_after_build
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash
+                          set +e
+                          set +o pipefail
+                          $LOCAL_GOMA_DIR/goma_ctl.py stat
+                          $LOCAL_GOMA_DIR/diagnose_goma_log.py
+                          true
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: mksnapshot build
+                      identifier: mksnapshot_build
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+
+                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" != "1" ]; then
+                            ninja -C out/Default electron:electron_mksnapshot -j $NUMBER_OF_NINJA_PROCESSES
+                            gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
+                            # Remove unused args from mksnapshot_args
+                            SEDOPTION="-i"
+                            if [ "`uname`" == "Darwin" ]; then
+                              SEDOPTION="-i ''"
+                            fi
+                            sed $SEDOPTION '/.*builtins-pgo/d' out/Default/mksnapshot_args
+                            sed $SEDOPTION '/--turbo-profiling-input/d' out/Default/mksnapshot_args
+                          fi
+                          if [ "`uname`" != "Darwin" ]; then
+                            if [ "$TARGET_ARCH" == "arm" ]; then
+                              script/strip-binaries.py --file $PWD/out/Default/clang_x86_v8_arm/mksnapshot
+                              script/strip-binaries.py --file $PWD/out/Default/clang_x86_v8_arm/v8_context_snapshot_generator
+                            elif [ "$TARGET_ARCH" == "arm64" ]; then
+                              script/strip-binaries.py --file $PWD/out/Default/clang_x64_v8_arm64/mksnapshot
+                              script/strip-binaries.py --file $PWD/out/Default/clang_x64_v8_arm64/v8_context_snapshot_generator
+                            else
+                              script/strip-binaries.py --file $PWD/out/Default/mksnapshot
+                              script/strip-binaries.py --file $PWD/out/Default/v8_context_snapshot_generator
+                            fi
+                          fi
+                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" != "1" ] && [ "$SKIP_DIST_ZIP" != "1" ]; then
+                            ninja -C out/Default electron:electron_mksnapshot_zip -j $NUMBER_OF_NINJA_PROCESSES
+                            (cd out/Default; zip mksnapshot.zip mksnapshot_args gen/v8/embedded.S)
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Generate cross arch snapshots
+                      identifier: Generate_cross_arch_snapshots
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "$GENERATE_CROSS_ARCH_SNAPSHOT" == "true" ] && [ -z "$CIRCLE_PR_NUMBER" ]; then
+                            cd src
+                            if [ "$TARGET_ARCH" == "arm" ]; then
+                              export MKSNAPSHOT_PATH="clang_x86_v8_arm"
+                            elif [ "$TARGET_ARCH" == "arm64" ]; then
+                              export MKSNAPSHOT_PATH="clang_x64_v8_arm64"
+                            fi
+                            cp "out/Default/$MKSNAPSHOT_PATH/mksnapshot" out/Default        
+                            cp "out/Default/$MKSNAPSHOT_PATH/v8_context_snapshot_generator" out/Default
+                            if [ "`uname`" == "Linux" ]; then
+                              cp "out/Default/$MKSNAPSHOT_PATH/libffmpeg.so" out/Default
+                            elif [ "`uname`" == "Darwin" ]; then
+                              cp "out/Default/$MKSNAPSHOT_PATH/libffmpeg.dylib" out/Default
+                            fi
+                            python electron/script/verify-mksnapshot.py --source-root "$PWD" --build-dir out/Default --create-snapshot-only
+                            mkdir cross-arch-snapshots
+                            cp out/Default-mksnapshot-test/*.bin cross-arch-snapshots
+                            # Clean up so that ninja does not get confused
+                            if [ "`uname`" == "Linux" ]; then
+                              rm -f out/Default/libffmpeg.so
+                            elif [ "`uname`" == "Darwin" ]; then
+                              rm -f out/Default/libffmpeg.dylib
+                            fi
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Build chromedriver
+                      identifier: Build_chromedriver
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+
+                          if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
+                            gn gen out/chromedriver --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") is_component_ffmpeg=false proprietary_codecs=false $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
+                            export CHROMEDRIVER_DIR="out/chromedriver"
+                          else
+                            export CHROMEDRIVER_DIR="out/Default"
+                          fi
+                          ninja -C $CHROMEDRIVER_DIR electron:electron_chromedriver -j $NUMBER_OF_NINJA_PROCESSES
+                          if [ "`uname`" == "Linux" ]; then
+                            electron/script/strip-binaries.py --target-cpu="$TARGET_ARCH" --file $PWD/$CHROMEDRIVER_DIR/chromedriver
+                          fi
+                          ninja -C $CHROMEDRIVER_DIR electron:electron_chromedriver_zip
+                          if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
+                            cp out/chromedriver/chromedriver.zip out/Default
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: ffmpeg GN gen
+                      identifier: ffmpeg_GN_gen
+                      spec:
+                        shell: Sh
+                        command: |
+                          gn gen out/ffmpeg --args="import(\"/build/args/ffmpeg.gn\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS"
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Non proprietary ffmpeg build
+                      identifier: Non_proprietary_ffmpeg_build
+                      spec:
+                        shell: Sh
+                        command: |
+                          ninja -C out/ffmpeg electron:electron_ffmpeg_zip -j $NUMBER_OF_NINJA_PROCESSES
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Generate breakpad symbols
+                      identifier: Generate_breakpad_symbols
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          if [ "$GENERATE_SYMBOLS" == "true" ]; then
+                            ninja -C out/Default electron:electron_symbols
+                          fi
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Zip symbols
+                      identifier: Zip_symbols
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+
+                          export BUILD_PATH="$PWD/out/Default"
+                          ninja -C out/Default electron:licenses
+                          ninja -C out/Default electron:electron_version_file
+                          script/zip-symbols.py -b $BUILD_PATH
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Move all generated artifacts to upload folder
+                      identifier: Move_all_generated_artifacts_to_upload_folder
+                      spec:
+                        shell: Sh
+                        command: |
+                          #!/bin/bash -eo pipefail
+                          rm -rf generated_artifacts_linux-x64
+                          mkdir generated_artifacts_linux-x64
+                          mv_if_exist() {
+                            if [ -f "$1" ] || [ -d "$1" ]; then
+                              echo Storing $1
+                              mv $1 generated_artifacts_linux-x64
+                            else
+                              echo Skipping $1 - It is not present on disk
+                            fi
+                          }
+                          cp_if_exist() {
+                            if [ -f "$1" ] || [ -d "$1" ]; then
+                              echo Storing $1
+                              cp $1 generated_artifacts_linux-x64
+                            else
+                              echo Skipping $1 - It is not present on disk
+                            fi
+                          }
+                          mv_if_exist src/out/Default/dist.zip
+                          mv_if_exist src/out/Default/gen/node_headers.tar.gz
+                          mv_if_exist src/out/Default/symbols.zip
+                          mv_if_exist src/out/Default/mksnapshot.zip
+                          mv_if_exist src/out/Default/chromedriver.zip
+                          mv_if_exist src/out/ffmpeg/ffmpeg.zip
+                          mv_if_exist src/out/Default/hunspell_dictionaries.zip
+                          mv_if_exist src/cross-arch-snapshots
+                          cp_if_exist src/out/electron_ninja_log
+                          cp_if_exist src/out/Default/.ninja_log
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: GCSUpload
+                      name: Upload Artifacts to GCS_1
+                      identifier: UploadArtifactstoGCS_1
+                      spec:
+                        connectorRef: gcpdhruba
+                        bucket: test-electron
+                        sourcePath: generated_artifacts_linux-x64
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Remove unused data
+                      identifier: Remove_unused_data
+                      spec:
+                        shell: Sh
+                        command: |-
+                          #!/bin/bash -eo pipefail
+                          rm -rf src/android_webview
+                          rm -rf src/ios/chrome
+                          rm -rf src/third_party/blink/web_tests
+                          rm -rf src/third_party/blink/perf_tests
+                          rm -rf third_party/electron_node/deps/openssl
+                          rm -rf third_party/electron_node/deps/v8
+                          rm -rf chrome/test/data/xr/webvr_info
+                          rm -rf src/third_party/angle/third_party/VK-GL-CTS/src
+                          rm -rf src/third_party/swift-toolchain
+                          rm -rf src/third_party/swiftshader/tests/regres/testlists
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
+                      name: rm rf
+                      identifier: rm_rf
+                      spec:
+                        shell: Sh
+                        command: |
+                          rm -rf third_party/electron_node/deps/openssl
+                          rm -rf third_party/electron_node/deps/v8
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: //electron/build/args/testing.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+            when:
+              pipelineStatus: All
+        - stage:
             name: linux-x64-testing-asan
             identifier: linuxx64testingasan
             description: ""
