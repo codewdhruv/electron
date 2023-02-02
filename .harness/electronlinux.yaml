@@ -1823,12 +1823,12 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
-                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
-                          cd buildtools
+                          git clone --depth=1 git clone https://chromium.googlesource.com/chromium/src.git
+                          cd src
                           npm install
 
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/buildtools"'
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src"'
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
                         envVariables:
@@ -1837,50 +1837,6 @@ pipeline:
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
-                      name: Run_37
-                      identifier: Run_37
-                      spec:
-                        shell: Sh
-                        command: |-
-                          git clone --depth=1 https://chromium.googlesource.com/chromium/src/third_party.git
-                          cd third_party
-                          npm install
-
-                          echo 'export THIRD_BUILDTOOLS_PATH="'"$PWD"'/third_party"'
-                          export THIRD_BUILDTOOLS_PATH="/harness/third_party"
-                          echo $BASH_ENV
-                          export BASH_ENV=$THIRD_BUILDTOOLS_PATH
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
-                      name: Run_39
-                      identifier: Run_39
-                      spec:
-                        shell: Sh
-                        command: |-
-                          git clone --depth=1 git clone https://fuchsia.googlesource.com/third_party/ninja.git
-                          ls
-                          cd ninja
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
-                      name: Run_38
-                      identifier: Run_38
-                      spec:
-                        shell: Sh
-                        command: |-
-                          git clone --depth=1 https://chromium.googlesource.com/infra.git
-                          cd infra
-                          npm install
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -1998,72 +1954,6 @@ pipeline:
                       failureStrategies: []
                   - step:
                       type: Run
-                      name: Run_36
-                      identifier: Run_36
-                      spec:
-                        shell: Sh
-                        command: |
-                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
-                          cd buildtools
-                          npm install
-
-                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                          export PATH="$PATH:/harness/depot_tools"
-                          echo $BASH_ENV
-                          export BASH_ENV=$PATH
-
-                          git clone --depth=1 https://chromium.googlesource.com/chromium/src/third_party.git
-                          ls
-                          cd third_party
-                          npm install
-
-                          SEDOPTION="-i"
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
-                          sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure --root third_party/ninja -ensure-file ninja_ensure_file
-
-                          # Explicitly add ninja to the path
-                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"' 
-
-                          cd third_party/angle
-                          rm .git/objects/info/alternates
-                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
-                          cp .git/config .git/config.backup
-                          git remote remove origin
-                          mv .git/config.backup .git/config
-                          git fetch
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
-                      name: Run_33
-                      identifier: Run_33
-                      spec:
-                        shell: Sh
-                        command: |-
-                          ls
-                          cd depot_tools/ninja/
-                          ls
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
-                      name: Run_34
-                      identifier: Run_34
-                      spec:
-                        shell: Sh
-                        command: |-
-                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"'
-
-                          cd depot_tools
-                          ls
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
                       name: Fix SYNC
                       identifier: Fix_SYNC
                       spec:
@@ -2076,21 +1966,17 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-                          gclient config http://src.chromium.org/svn/trunk/src
-                          gclient runhooks
-
-                          gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'
-
-
                           SEDOPTION="-i"
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+
+                          # Make sure we are using the right ninja
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=src/DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
                           sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure --root third_party/ninja -ensure-file ninja_ensure_file
+                          cipd ensure --root src/third_party/ninja -ensure-file ninja_ensure_file
 
                           # Explicitly add ninja to the path
-                          echo 'export PATH="$PATH:'"$PWD"'/third_party/ninja"' >> $BASH_ENV
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' >> $BASH_ENV
 
-                          cd third_party/angle
+                          cd src/third_party/angle
                           rm .git/objects/info/alternates
                           git remote set-url origin https://chromium.googlesource.com/angle/angle.git
                           cp .git/config .git/config.backup
@@ -2103,38 +1989,6 @@ pipeline:
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
-                      name: Run_35
-                      identifier: Run_35
-                      spec:
-                        shell: Sh
-                        command: |-
-                          #!/bin/bash -eo pipefail
-
-                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                          export PATH="$PATH:/harness/depot_tools"
-                          echo $BASH_ENV
-                          export BASH_ENV=$PATH
-
-                          SEDOPTION="-i"
-                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=DEPS -r 'third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
-                          sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
-                          cipd ensure --root third_party/ninja -ensure-file ninja_ensure_file
-
-                          # Explicitly add ninja to the path
-                          echo 'export PATH="$PATH:'"$PWD"'third_party/ninja"' >> $BASH_ENV
-
-                          cd third_party/angle
-                          rm .git/objects/info/alternates
-                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
-                          cp .git/config .git/config.backup
-                          git remote remove origin
-                          mv .git/config.backup .git/config
-                          git fetch
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -2166,13 +2020,8 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
-                          #!/bin/bash -eo pipefail
-                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
-                          cd buildtools
-                          npm install
-
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/buildtools"'
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src"'
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
@@ -2192,19 +2041,19 @@ pipeline:
                       identifier: electron_build
                       spec:
                         shell: Sh
-                        command: |-
+                        command: |
                           #!/bin/bash -eo pipefail
+                          cd src
 
-                          export NINJA_BUILDTOOLS_PATH="/harness/third_party/ninja"
-                          echo $BASH_ENV
-                          export BASH_ENV=$NINJA_BUILDTOOLS_PATH
-
-                            ninja -C out/Default electron:electron_mksnapshot_zip -j 34
-                            ninja -C out/Default tools/v8_context_snapshot -j 34
+                          # Lets generate a snapshot and mksnapshot and then delete all the x-compiled generated files to save space
+                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" == "1" ]; then
+                            ninja -C out/Default electron:electron_mksnapshot_zip -j $NUMBER_OF_NINJA_PROCESSES
+                            ninja -C out/Default tools/v8_context_snapshot -j $NUMBER_OF_NINJA_PROCESSES
                             gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
                             # Remove unused args from mksnapshot_args
                             SEDOPTION="-i"
-                            sed $SEDOPTION '/.*builtins-pgo/d' out/Default/mksnapshot_args
+
+                              sed $SEDOPTION '/.*builtins-pgo/d' out/Default/mksnapshot_args
                             sed $SEDOPTION '/--turbo-profiling-input/d' out/Default/mksnapshot_args
                             (cd out/Default; zip mksnapshot.zip mksnapshot_args clang_x64_v8_arm64/gen/v8/embedded.S)
                             if [ "false" == "true" ]; then
@@ -2221,7 +2070,7 @@ pipeline:
                           fi
                           NINJA_SUMMARIZE_BUILD=1 autoninja -C out/Default electron -j $NUMBER_OF_NINJA_PROCESSES
                           cp out/Default/.ninja_log out/electron_ninja_log
-                          node script/check-symlinks.js
+                          node electron/script/check-symlinks.js
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
