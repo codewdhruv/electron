@@ -823,7 +823,7 @@ pipeline:
                         shell: Sh
                         command: |-
                           ls
-                          cd depot_tools
+                          cd depot_tools/ninja/
                           ls
                       when:
                         stageStatus: All
