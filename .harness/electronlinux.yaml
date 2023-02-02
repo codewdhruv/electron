@@ -670,6 +670,10 @@ pipeline:
                           export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+
+                          git clone --depth=1 https://chromium.googlesource.com/chromium/src/third_party.git
+                          cd third_party
+                          npm install
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
