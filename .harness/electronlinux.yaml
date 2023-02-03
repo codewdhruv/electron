@@ -2044,6 +2044,9 @@ pipeline:
                           ninja -C out
                           # To run tests:
                           out/gn_unittests
+
+                          echo "export PATH=$PATH:/gn" >> $BASH_ENV
+                          source $BASH_ENV
                       when:
                         stageStatus: All
                       failureStrategies: []
