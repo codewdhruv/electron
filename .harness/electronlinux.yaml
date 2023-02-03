@@ -2034,10 +2034,9 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
-                          python src/tools/gn/roll_gn.py
 
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"'
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/tools/gn"'
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/tools/gn"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
