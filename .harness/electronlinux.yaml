@@ -2028,6 +2028,18 @@ pipeline:
                       failureStrategies: []
                   - step:
                       type: Run
+                      name: Install third_party deps for gn
+                      identifier: Install_third_party_deps_for_gn
+                      spec:
+                        shell: Sh
+                        command: |-
+                          cd src/third_party/
+                          npm install
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
+                  - step:
+                      type: Run
                       name: Default GN gen
                       identifier: Default_GN_gen
                       spec:
@@ -2039,8 +2051,8 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-                          cd src/third_party/
-                          npm install
+                          cd src
+                          gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: /build/args/release.gn
