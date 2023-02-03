@@ -2171,7 +2171,7 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-                              script/zip_manifests/check-zip-manifest.py out/Default/dist.zip electron/script/zip_manifests/dist_zip.linux.x64.manifest
+                          script/zip_manifests/check-zip-manifest.py out/Default/dist.zip script/zip_manifests/dist_zip.linux.x64.manifest
 
                         envVariables:
                           ELECTRON_OUT_DIR: Default
