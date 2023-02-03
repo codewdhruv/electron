@@ -2060,10 +2060,14 @@ pipeline:
                       identifier: Default_GN_gen
                       spec:
                         shell: Sh
-                        command: |-
-                          cd src
-                          export CHROMIUM_BUILDTOOLS_PATH=`pwd`/buildtools
-                          gn gen out/Testing --args="import(\"/build/args/testing.gn\")"
+                        command: |+
+                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                          export PATH="$PATH:/harness/depot_tools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
+                          gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
+
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: /build/args/release.gn
