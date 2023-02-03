@@ -2045,10 +2045,10 @@ pipeline:
                           # To run tests:
                           out/gn_unittests
 
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="$PATH:'"$PWD"'/gn"'
-                          export CHROMIUM_BUILDTOOLS_PATH="$PATH:/harness/gn/gn"
+                          echo 'export PATH="$PATH:'"$PWD"'/gn"'
+                          export PATH="$PATH:/harness/gn/gn"
                           echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                          export BASH_ENV=$PATH
 
                           gn gen out/Testing --args="import(\"/build/args/testing.gn\")"
                       when:
