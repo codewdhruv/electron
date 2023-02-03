@@ -1,8 +1,10 @@
 ## Electron CircleCI to Harness CI Migration Guide:
 
 Before migrating from [CircleCI to Harness CI](https://github.com/harness-community/ci-migration-guides/tree/main/CIRCLECI_TO_HARNESS_CI), kindly go through [this](https://github.com/harness-community/ci-migration-guides/tree/main/CIRCLECI_TO_HARNESS_CI) guide.  
-![](https://33333.cdn.cke-cs.com/kSW7V9NHUXugvhoQeFaf/images/8950a8c152d7b6f986dc62d9a07942d34f24d956e3e994a0.png)  
-![](https://33333.cdn.cke-cs.com/kSW7V9NHUXugvhoQeFaf/images/7a07a6fe2b46eb45cc004032fdc1eb97cae1d8cea0574715.png)
+<img width="1777" alt="Screenshot 2023-02-03 at 8 02 37 PM" src="https://user-images.githubusercontent.com/61685945/216629430-9e1fa4a3-67f2-4cf1-8f56-ff87dd3bbaad.png">
+<img width="1777" alt="Screenshot 2023-02-03 at 8 02 26 PM" src="https://user-images.githubusercontent.com/61685945/216629450-e2252aa1-53be-4c0d-95e2-e06856ad0223.png">
+
+
 
 ### Challenge in Sharing Data between Stages:
 
