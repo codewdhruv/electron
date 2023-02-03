@@ -1006,7 +1006,6 @@ pipeline:
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
-                          git clone --depth=1 https://chromium.googlesource.com/chromium/buildtools.git
                           cd buildtools
                           npm install
 
