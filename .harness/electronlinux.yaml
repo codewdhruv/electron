@@ -2038,7 +2038,7 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-                          git clone --depth=1 https://gn.googlesource.com/gn.git
+                          git clone https://gn.googlesource.com/gn.git
                           cd gn
                           python build/gen.py # --allow-warning if you want to build with warnings.
                           ninja -C out
