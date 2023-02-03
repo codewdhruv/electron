@@ -8092,209 +8092,31 @@ pipeline:
                       failureStrategies: []
             when:
               pipelineStatus: All
-    - stage:
-        name: testing
-        identifier: testing
-        description: ""
-        type: CI
-        spec:
-          cloneCodebase: true
-          platform:
-            os: Linux
-            arch: Amd64
-          runtime:
-            type: Cloud
-            spec: {}
-          execution:
-            steps:
-              - step:
-                  type: Run
-                  name: Run_1
-                  identifier: Run_1
-                  spec:
-                    shell: Sh
-                    command: |-
-                      #!/bin/bash -eo pipefail
-                      if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
-                        if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
-                          mkdir python-downloads
-                          echo 'Downloading Python 2.7.18'
-                          curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
-                          mv python-2.7.18-macosx10.9.pkg python-downloads
-                        else
-                          echo 'Using Python install from cache'
-                        fi
-                        sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
-                      fi
-              - step:
-                  type: SaveCacheGCS
-                  name: Persisting python cache
-                  identifier: Restore_python_cache
-                  spec:
-                    connectorRef: gcpdhruba
-                    bucket: test-electron
-                    key: v2.7.18-python-cache-{{ arch }}
-                    sourcePaths:
-                      - python-downloads
-                    archiveFormat: Tar
-                  failureStrategies:
-                    - onFailure:
-                        errors:
-                          - AllErrors
-                        action:
-                          type: MarkAsSuccess
-              - step:
-                  type: Run
-                  name: deps
-                  identifier: deps
-                  spec:
-                    shell: Sh
-                    command: |
-                      git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
-                      ls
-                      sed -i '/ninjalog_uploader_wrapper.py/d' depot_tools/autoninja
-                      cd depot_tools
-                      patch gclient.py -R <<'EOF'
-                      676,677c676
-                      <         packages = dep_value.get('packages', [])
-                      <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
-                      ---
-                      >         for package in dep_value.get('packages', []):
-                      EOF
-                  when:
-                    stageStatus: All
-                  failureStrategies: []
-              - step:
-                  type: Run
-                  name: add deps
-                  identifier: add_deps
-                  spec:
-                    shell: Sh
-                    command: |-
-                      #!/bin/bash -eo pipefail
-                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                      export PATH="$PATH:/harness/depot_tools"
-                      echo $BASH_ENV
-                      export BASH_ENV=$PATH
-                  when:
-                    stageStatus: All
-                  failureStrategies: []
-              - step:
-                  type: Run
-                  name: free space
-                  identifier: free_space
-                  spec:
-                    shell: Sh
-                    command: |-
-                      sudo mkdir -p $TMPDIR/del-target
-
-                        tmpify() {
-                          if [ -d "$1" ]; then
-                            sudo mv "$1" $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
-                          fi
-                        }
-
-                          strip_arm_deep() {
-                          opwd=$(pwd)
-                          cd $1
-                          f=$(find . -perm +111 -type f)
-                          for fp in $f
-                          do
-                            if [[ $(file "$fp") == *"universal binary"* ]]; then
-                              if [[ $(file "$fp") == *"arm64e)"* ]]; then
-                                sudo lipo -remove arm64e "$fp" -o "$fp" || true
-                              fi
-                              if [[ $(file "$fp") == *"arm64)"* ]]; then
-                                sudo lipo -remove arm64 "$fp" -o "$fp" || true
-                              fi
-                            fi
-                          done
-
-                          cd $opwd
-                        }
-
-                        tmpify /Library/Developer/CoreSimulator
-                        tmpify ~/Library/Developer/CoreSimulator
-                        tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
-                        tmpify $(xcode-select -p)/Platforms/iPhoneOS.platform
-                        tmpify $(xcode-select -p)/Platforms/WatchOS.platform
-                        tmpify $(xcode-select -p)/Platforms/WatchSimulator.platform
-                        tmpify $(xcode-select -p)/Platforms/AppleTVSimulator.platform
-                        tmpify $(xcode-select -p)/Platforms/iPhoneSimulator.platform
-                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/metal/ios
-                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift
-                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0
-                        tmpify ~/.rubies
-                        tmpify ~/Library/Caches/Homebrew
-                        tmpify /usr/local/Homebrew
-                        sudo rm -rf $TMPDIR/del-target
-
-                        # sudo rm -rf "/System/Library/Desktop Pictures"
-                        # sudo rm -rf /System/Library/Templates/Data
-                        # sudo rm -rf /System/Library/Speech/Voices
-                        # sudo rm -rf "/System/Library/Screen Savers"
-                        # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs
-                        # sudo rm -rf "/System/Volumes/Data/Library/Application Support/Apple/Photos/Print Products"
-                        # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/
-                        # sudo rm -rf /System/Volumes/Data/Library/Java
-                        # sudo rm -rf /System/Volumes/Data/Library/Ruby
-                        # sudo rm -rf /System/Volumes/Data/Library/Printers
-                        # sudo rm -rf /System/iOSSupport
-                        # sudo rm -rf /System/Applications/*.app
-                        # sudo rm -rf /System/Applications/Utilities/*.app
-                        # sudo rm -rf /System/Library/LinguisticData
-                        # sudo rm -rf /System/Volumes/Data/private/var/db/dyld/*
-                        # sudo rm -rf /System/Library/Fonts/*
-                        # sudo rm -rf /System/Library/PreferencePanes
-                        # sudo rm -rf /System/Library/AssetsV2/*
-                        sudo rm -rf /Applications/Safari.app
-                        sudo rm -rf ~/project/src/build/linux
-                        sudo rm -rf ~/project/src/third_party/catapult/tracing/test_data
-                        sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
-
-                        # lipo off some huge binaries arm64 versions to save space
-                        strip_arm_deep $(xcode-select -p)/ ./SharedFrameworks
-                        # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
-                      fi
-                  when:
-                    stageStatus: All
-                  failureStrategies: []
-              - step:
-                  type: Run
-                  name: Run_5
-                  identifier: Run_5
-                  spec:
-                    shell: Bash
-                    command: node script/generate-deps-hash.js && cat .depshash-target
-                  when:
-                    stageStatus: All
-                  failureStrategies: []
-              - step:
-                  type: Run
-                  name: Run_6
-                  identifier: Run_6
-                  spec:
-                    shell: Sh
-                    command: |-
-                      touch .circle-sync-done
-                      ls
-                  when:
-                    stageStatus: All
-                  failureStrategies: []
-              - step:
-                  type: Run
-                  name: Run_7
-                  identifier: Run_7
-                  spec:
-                    shell: Sh
-                    command: |-
-                      sudo mkdir -p /var/portal
-                      sudo chown -R $(id -u):$(id -g) /var/portal
-                  when:
-                    stageStatus: All
-                  failureStrategies: []
-          sharedPaths:
-            - /src/electron/
+    - parallel:
+        - stage:
+            name: linux-x64-testing-asan-tests
+            identifier: linuxx64testingasantests
+            template:
+              templateRef: x64testtemplate
+              versionLabel: v1
+        - stage:
+            name: linux-x64-testing-nan
+            identifier: linuxx64testingnan
+            template:
+              templateRef: x64testtemplate
+              versionLabel: v1
+        - stage:
+            name: linux-x64-testing-node
+            identifier: linuxx64testingnode
+            template:
+              templateRef: x64testtemplate
+              versionLabel: v1
+        - stage:
+            name: linux-x64-testing-tests
+            identifier: linuxx64testingtests
+            template:
+              templateRef: x64testtemplate
+              versionLabel: v1
     - stage:
         name: linux-make-src-cache-test
         identifier: linuxmakesrccachetest
@@ -8595,4 +8417,207 @@ pipeline:
             type: String
             description: ""
             value: Default
+    - stage:
+        name: testing
+        identifier: testing
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Run_1
+                  identifier: Run_1
+                  spec:
+                    shell: Sh
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      if [ "`uname`" == "Darwin" ] && [ "$IS_ELECTRON_RUNNER" != "1" ]; then
+                        if [ ! -f "python-downloads/python-2.7.18-macosx10.9.pkg" ]; then
+                          mkdir python-downloads
+                          echo 'Downloading Python 2.7.18'
+                          curl -O https://dev-cdn.electronjs.org/python/python-2.7.18-macosx10.9.pkg
+                          mv python-2.7.18-macosx10.9.pkg python-downloads
+                        else
+                          echo 'Using Python install from cache'
+                        fi
+                        sudo installer -pkg python-downloads/python-2.7.18-macosx10.9.pkg -target /        
+                      fi
+              - step:
+                  type: SaveCacheGCS
+                  name: Persisting python cache
+                  identifier: Restore_python_cache
+                  spec:
+                    connectorRef: gcpdhruba
+                    bucket: test-electron
+                    key: v2.7.18-python-cache-{{ arch }}
+                    sourcePaths:
+                      - python-downloads
+                    archiveFormat: Tar
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: MarkAsSuccess
+              - step:
+                  type: Run
+                  name: deps
+                  identifier: deps
+                  spec:
+                    shell: Sh
+                    command: |
+                      git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
+                      ls
+                      sed -i '/ninjalog_uploader_wrapper.py/d' depot_tools/autoninja
+                      cd depot_tools
+                      patch gclient.py -R <<'EOF'
+                      676,677c676
+                      <         packages = dep_value.get('packages', [])
+                      <         for package in (x for x in packages if "infra/3pp/tools/swift-format" not in x.get('package')):
+                      ---
+                      >         for package in dep_value.get('packages', []):
+                      EOF
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: add deps
+                  identifier: add_deps
+                  spec:
+                    shell: Sh
+                    command: |-
+                      #!/bin/bash -eo pipefail
+                      echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
+                      export PATH="$PATH:/harness/depot_tools"
+                      echo $BASH_ENV
+                      export BASH_ENV=$PATH
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: free space
+                  identifier: free_space
+                  spec:
+                    shell: Sh
+                    command: |-
+                      sudo mkdir -p $TMPDIR/del-target
+
+                        tmpify() {
+                          if [ -d "$1" ]; then
+                            sudo mv "$1" $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
+                          fi
+                        }
+
+                          strip_arm_deep() {
+                          opwd=$(pwd)
+                          cd $1
+                          f=$(find . -perm +111 -type f)
+                          for fp in $f
+                          do
+                            if [[ $(file "$fp") == *"universal binary"* ]]; then
+                              if [[ $(file "$fp") == *"arm64e)"* ]]; then
+                                sudo lipo -remove arm64e "$fp" -o "$fp" || true
+                              fi
+                              if [[ $(file "$fp") == *"arm64)"* ]]; then
+                                sudo lipo -remove arm64 "$fp" -o "$fp" || true
+                              fi
+                            fi
+                          done
+
+                          cd $opwd
+                        }
+
+                        tmpify /Library/Developer/CoreSimulator
+                        tmpify ~/Library/Developer/CoreSimulator
+                        tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
+                        tmpify $(xcode-select -p)/Platforms/iPhoneOS.platform
+                        tmpify $(xcode-select -p)/Platforms/WatchOS.platform
+                        tmpify $(xcode-select -p)/Platforms/WatchSimulator.platform
+                        tmpify $(xcode-select -p)/Platforms/AppleTVSimulator.platform
+                        tmpify $(xcode-select -p)/Platforms/iPhoneSimulator.platform
+                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/metal/ios
+                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift
+                        tmpify $(xcode-select -p)/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-5.0
+                        tmpify ~/.rubies
+                        tmpify ~/Library/Caches/Homebrew
+                        tmpify /usr/local/Homebrew
+                        sudo rm -rf $TMPDIR/del-target
+
+                        # sudo rm -rf "/System/Library/Desktop Pictures"
+                        # sudo rm -rf /System/Library/Templates/Data
+                        # sudo rm -rf /System/Library/Speech/Voices
+                        # sudo rm -rf "/System/Library/Screen Savers"
+                        # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs
+                        # sudo rm -rf "/System/Volumes/Data/Library/Application Support/Apple/Photos/Print Products"
+                        # sudo rm -rf /System/Volumes/Data/Library/Developer/CommandLineTools/SDKs/MacOSX10.15.sdk/
+                        # sudo rm -rf /System/Volumes/Data/Library/Java
+                        # sudo rm -rf /System/Volumes/Data/Library/Ruby
+                        # sudo rm -rf /System/Volumes/Data/Library/Printers
+                        # sudo rm -rf /System/iOSSupport
+                        # sudo rm -rf /System/Applications/*.app
+                        # sudo rm -rf /System/Applications/Utilities/*.app
+                        # sudo rm -rf /System/Library/LinguisticData
+                        # sudo rm -rf /System/Volumes/Data/private/var/db/dyld/*
+                        # sudo rm -rf /System/Library/Fonts/*
+                        # sudo rm -rf /System/Library/PreferencePanes
+                        # sudo rm -rf /System/Library/AssetsV2/*
+                        sudo rm -rf /Applications/Safari.app
+                        sudo rm -rf ~/project/src/build/linux
+                        sudo rm -rf ~/project/src/third_party/catapult/tracing/test_data
+                        sudo rm -rf ~/project/src/third_party/angle/third_party/VK-GL-CTS
+
+                        # lipo off some huge binaries arm64 versions to save space
+                        strip_arm_deep $(xcode-select -p)/ ./SharedFrameworks
+                        # strip_arm_deep /System/Volumes/Data/Library/Developer/CommandLineTools/usr
+                      fi
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run_5
+                  identifier: Run_5
+                  spec:
+                    shell: Bash
+                    command: node script/generate-deps-hash.js && cat .depshash-target
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run_6
+                  identifier: Run_6
+                  spec:
+                    shell: Sh
+                    command: |-
+                      touch .circle-sync-done
+                      ls
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+              - step:
+                  type: Run
+                  name: Run_7
+                  identifier: Run_7
+                  spec:
+                    shell: Sh
+                    command: |-
+                      sudo mkdir -p /var/portal
+                      sudo chown -R $(id -u):$(id -g) /var/portal
+                  when:
+                    stageStatus: All
+                  failureStrategies: []
+          sharedPaths:
+            - /src/electron/
   allowStageExecutions: true
