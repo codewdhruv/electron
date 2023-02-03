@@ -2063,6 +2063,14 @@ pipeline:
 
                           cd src
                           gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
+                        envVariables:
+                          ELECTRON_OUT_DIR: Default
+                          GN_CONFIG: /build/args/release.gn
+                          CHECK_DIST_MANIFEST: "'1'"
+                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
+                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                          GN_GOMA_FILE: node -e "console.log(require('./src/utils/goma.js').gnFilePath)"
+                          GN_BUILDFLAG_ARGS: enable_run_as_node = false
                   - step:
                       type: Run
                       name: Default GN gen
