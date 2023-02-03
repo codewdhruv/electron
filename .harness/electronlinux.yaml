@@ -2130,7 +2130,12 @@ pipeline:
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
-                          cd 
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+
+                          cd src
                           if [ "$SKIP_DIST_ZIP" != "1" ]; then
                             ninja -C out/Default electron:electron_dist_zip shell_browser_ui_unittests third_party/electron_node:headers third_party/electron_node:overlapped-checker electron:hunspell_dictionaries_zip -j $NUMBER_OF_NINJA_PROCESSES
                             if [ "$CHECK_DIST_MANIFEST" == "1" ]; then
@@ -2173,9 +2178,7 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
-                          #!/bin/bash
-                          set +e
-                          set +o pipefail
+
                           $LOCAL_GOMA_DIR/goma_ctl.py stat
                           $LOCAL_GOMA_DIR/diagnose_goma_log.py
                           true
@@ -2196,6 +2199,11 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
+
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
                           if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" != "1" ]; then
                             ninja -C out/Default electron:electron_mksnapshot -j $NUMBER_OF_NINJA_PROCESSES
@@ -2282,6 +2290,11 @@ pipeline:
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+
 
                           if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
                             gn gen out/chromedriver --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") is_component_ffmpeg=false proprietary_codecs=false $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
@@ -2313,6 +2326,10 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
                           gn gen out/ffmpeg --args="import(\"/build/args/ffmpeg.gn\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
@@ -2330,6 +2347,11 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+
                           ninja -C out/ffmpeg electron:electron_ffmpeg_zip -j $NUMBER_OF_NINJA_PROCESSES
                         envVariables:
                           ELECTRON_OUT_DIR: Default
@@ -2348,6 +2370,11 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+
                           if [ "$GENERATE_SYMBOLS" == "true" ]; then
                             ninja -C out/Default electron:electron_symbols
                           fi
@@ -2368,6 +2395,10 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
                           export BUILD_PATH="$PWD/out/Default"
                           ninja -C out/Default electron:licenses
