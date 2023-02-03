@@ -2035,10 +2035,10 @@ pipeline:
                         shell: Sh
                         command: |-
 
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/tools/gn"'
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/tools/gn"
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/gn"' 
+                          export PATH="$PATH:/harness/src/third_party/gn"
                           echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                          export BASH_ENV=$PATH
 
                           ls
 
