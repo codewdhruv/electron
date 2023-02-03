@@ -2045,7 +2045,10 @@ pipeline:
                           # To run tests:
                           out/gn_unittests
 
-                          echo 'export PATH="$PATH:'"$PWD"'/gn"'
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="$PATH:'"$PWD"'/gn"'
+                          export CHROMIUM_BUILDTOOLS_PATH="$PATH:/harness/gn/gn"
+                          echo $BASH_ENV
+
 
                       when:
                         stageStatus: All
