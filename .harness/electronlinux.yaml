@@ -2032,7 +2032,7 @@ pipeline:
                       identifier: Install_third_party_deps_for_gn
                       spec:
                         shell: Sh
-                        command: |
+                        command: |+
                           echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
                           export PATH="$PATH:/harness/src/third_party/ninja"
                           echo $BASH_ENV
@@ -2045,15 +2045,24 @@ pipeline:
                           # To run tests:
                           out/gn_unittests
 
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="$PATH:'"$PWD"'/src/buildtools"'
-                          export CHROMIUM_BUILDTOOLS_PATH="$PATH:/harness/src/src/buildtools"
-                          echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
-                          gn gen out/Testing --args="import(\"/build/args/testing.gn\")"
                       when:
                         stageStatus: All
                       failureStrategies: []
+                  - step:
+                      type: Run
+                      name: Add GN
+                      identifier: Add_GN
+                      spec:
+                        shell: Sh
+                        command: |-
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="$PATH:'"$PWD"'/src/buildtools"'
+                          export CHROMIUM_BUILDTOOLS_PATH="$PATH:/harness/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+
+                          cd src
+                          gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
                   - step:
                       type: Run
                       name: Default GN gen
