@@ -2035,7 +2035,7 @@ pipeline:
                         shell: Sh
                         command: |-
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"'
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/src/buildtools"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
