@@ -2042,6 +2042,8 @@ pipeline:
                           cd gn
                           python build/gen.py # --allow-warning if you want to build with warnings.
                           ninja -C out
+                          # To run tests:
+                          out/gn_unittests
                       when:
                         stageStatus: All
                       failureStrategies: []
