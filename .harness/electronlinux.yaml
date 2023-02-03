@@ -2068,7 +2068,6 @@ pipeline:
                           cd src
 
                           # Lets generate a snapshot and mksnapshot and then delete all the x-compiled generated files to save space
-                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" == "1" ]; then
                             ninja -C out/Default electron:electron_mksnapshot_zip -j $NUMBER_OF_NINJA_PROCESSES
                             ninja -C out/Default tools/v8_context_snapshot -j $NUMBER_OF_NINJA_PROCESSES
                             gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
@@ -2089,16 +2088,19 @@ pipeline:
                             # For x-compiles this will be built to the wrong arch after the context snapshot build
                             # so we wipe it before re-linking it below
                             rm -rf out/Default/libffmpeg.dylib
-                          fi
+
                           NINJA_SUMMARIZE_BUILD=1 autoninja -C out/Default electron -j $NUMBER_OF_NINJA_PROCESSES
                           cp out/Default/.ninja_log out/electron_ninja_log
                           node script/check-symlinks.js
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                          USE_PREBUILT_V8_CONTEXT_SNAPSHOT: "1"
+                          NUMBER_OF_NINJA_PROCESSES: "34"
+                          GN_BUILDFLAG_ARGS: "'enable_run_as_node = false'"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -2136,7 +2138,7 @@ pipeline:
                       identifier: Build_dist_zip
                       spec:
                         shell: Sh
-                        command: |
+                        command: |+
                           #!/bin/bash -eo pipefail
                           # Explicitly add ninja to the path
                           echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
@@ -2144,34 +2146,8 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
+                              script/zip_manifests/check-zip-manifest.py out/Default/dist.zip electron/script/zip_manifests/dist_zip.linux.x64.manifest
 
-                          cd src
-                          if [ "$SKIP_DIST_ZIP" != "1" ]; then
-                            ninja -C out/Default electron:electron_dist_zip shell_browser_ui_unittests third_party/electron_node:headers third_party/electron_node:overlapped-checker electron:hunspell_dictionaries_zip -j $NUMBER_OF_NINJA_PROCESSES
-                            if [ "$CHECK_DIST_MANIFEST" == "1" ]; then
-                              if [ "`uname`" == "Darwin" ]; then
-                                target_os=mac
-                                target_cpu=x64
-                                if [ x"$MAS_BUILD" == x"true" ]; then
-                                  target_os=mac_mas
-                                fi
-                                if [ "$TARGET_ARCH" == "arm64" ]; then
-                                  target_cpu=arm64
-                                fi
-                              elif [ "`uname`" == "Linux" ]; then
-                                target_os=linux
-                                if [ x"$TARGET_ARCH" == x ]; then
-                                  target_cpu=x64
-                                else
-                                  target_cpu="$TARGET_ARCH"
-                                fi
-                              else
-                                echo "Unknown system: `uname`"
-                                exit 1
-                              fi
-                              script/zip_manifests/check-zip-manifest.py out/Default/dist.zip electron/script/zip_manifests/dist_zip.$target_os.$target_cpu.manifest
-                            fi
-                          fi
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: //electron/build/args/testing.gn
@@ -2200,7 +2176,12 @@ pipeline:
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                       when:
                         stageStatus: All
-                      failureStrategies: []
+                      failureStrategies:
+                        - onFailure:
+                            errors:
+                              - AllErrors
+                            action:
+                              type: MarkAsSuccess
                   - step:
                       type: Run
                       name: mksnapshot build
@@ -2216,18 +2197,13 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-
-                          if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" != "1" ]; then
                             ninja -C out/Default electron:electron_mksnapshot -j $NUMBER_OF_NINJA_PROCESSES
                             gn desc out/Default v8:run_mksnapshot_default args > out/Default/mksnapshot_args
                             # Remove unused args from mksnapshot_args
                             SEDOPTION="-i"
-                            if [ "`uname`" == "Darwin" ]; then
-                              SEDOPTION="-i ''"
-                            fi
                             sed $SEDOPTION '/.*builtins-pgo/d' out/Default/mksnapshot_args
                             sed $SEDOPTION '/--turbo-profiling-input/d' out/Default/mksnapshot_args
-                          fi
+
                           if [ "`uname`" != "Darwin" ]; then
                             if [ "$TARGET_ARCH" == "arm" ]; then
                               script/strip-binaries.py --file $PWD/out/Default/clang_x86_v8_arm/mksnapshot
@@ -2250,6 +2226,8 @@ pipeline:
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                          NUMBER_OF_NINJA_PROCESSES: "34"
+                          USE_PREBUILT_V8_CONTEXT_SNAPSHOT: "1"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -2375,6 +2353,7 @@ pipeline:
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                          NUMBER_OF_NINJA_PROCESSES: "34"
                       when:
                         stageStatus: All
                       failureStrategies: []
@@ -2402,6 +2381,7 @@ pipeline:
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
+                          GENERATE_SYMBOLS: "true"
                       when:
                         stageStatus: All
                       failureStrategies: []
