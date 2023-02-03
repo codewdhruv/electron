@@ -2058,7 +2058,6 @@ pipeline:
                           echo $BASH_ENV
                           export BASH_ENV=$PATH
 
-                          cd src
                           gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
