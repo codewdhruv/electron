@@ -2057,6 +2057,14 @@ pipeline:
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
+
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
+
                           cd src
 
                           # Lets generate a snapshot and mksnapshot and then delete all the x-compiled generated files to save space
@@ -2130,10 +2138,12 @@ pipeline:
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
                           echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                          export BASH_ENV=$PATH
+
 
                           cd src
                           if [ "$SKIP_DIST_ZIP" != "1" ]; then
@@ -2200,10 +2210,12 @@ pipeline:
                         command: |-
                           #!/bin/bash -eo pipefail
 
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
                           echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                          export BASH_ENV=$PATH
+
 
                           if [ "$USE_PREBUILT_V8_CONTEXT_SNAPSHOT" != "1" ]; then
                             ninja -C out/Default electron:electron_mksnapshot -j $NUMBER_OF_NINJA_PROCESSES
@@ -2290,10 +2302,12 @@ pipeline:
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
                           echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                          export BASH_ENV=$PATH
+
 
 
                           if [ "$TARGET_ARCH" == "arm" ] || [ "$TARGET_ARCH" == "arm64" ]; then
@@ -2347,10 +2361,12 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
                           echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                          export BASH_ENV=$PATH
+
 
                           ninja -C out/ffmpeg electron:electron_ffmpeg_zip -j $NUMBER_OF_NINJA_PROCESSES
                         envVariables:
@@ -2370,10 +2386,12 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
                           echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                          export BASH_ENV=$PATH
+
 
                           if [ "$GENERATE_SYMBOLS" == "true" ]; then
                             ninja -C out/Default electron:electron_symbols
@@ -2395,10 +2413,12 @@ pipeline:
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
                           echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
+                          export BASH_ENV=$PATH
+
 
                           export BUILD_PATH="$PWD/out/Default"
                           ninja -C out/Default electron:licenses
