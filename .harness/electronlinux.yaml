@@ -2054,7 +2054,7 @@ pipeline:
                         command: |-
                           cd src
 
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/gn"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
