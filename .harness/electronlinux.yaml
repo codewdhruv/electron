@@ -2033,9 +2033,15 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
+                          export PATH="$PATH:/harness/src/third_party/ninja"
+                          echo $BASH_ENV
+                          export BASH_ENV=$PATH
+
                           git clone --depth=1 https://gn.googlesource.com/gn.git
                           cd gn
-                          npm install
+                          python build/gen.py # --allow-warning if you want to build with warnings.
+                          ninja -C out
                       when:
                         stageStatus: All
                       failureStrategies: []
