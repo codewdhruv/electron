@@ -2052,11 +2052,11 @@ pipeline:
                       spec:
                         shell: Sh
                         command: |-
+                          cd src
 
-                          echo 'export PATH="$PATH:'"$PWD"'/gn"' 
-                          export PATH="$PATH:/harness/gn"
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/buildtools"
                           echo $BASH_ENV
-                          export BASH_ENV=$PATH
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
                           gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
                         envVariables:
