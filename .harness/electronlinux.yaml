@@ -2032,7 +2032,7 @@ pipeline:
                       identifier: Install_third_party_deps_for_gn
                       spec:
                         shell: Sh
-                        command: |+
+                        command: |
                           echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
                           export PATH="$PATH:/harness/src/third_party/ninja"
                           echo $BASH_ENV
@@ -2045,7 +2045,10 @@ pipeline:
                           # To run tests:
                           out/gn_unittests
 
-
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="$PATH:'"$PWD"'/src/buildtools"' 
+                          export CHROMIUM_BUILDTOOLS_PATH="$PATH:/harness/src/src/buildtools"
+                          echo $BASH_ENV
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
                       when:
                         stageStatus: All
                       failureStrategies: []
