@@ -2085,6 +2085,9 @@ pipeline:
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
                           GN_GOMA_FILE: node -e "console.log(require('./src/utils/goma.js').gnFilePath)"
                           GN_BUILDFLAG_ARGS: enable_run_as_node = false
+                      when:
+                        stageStatus: All
+                      failureStrategies: []
                   - step:
                       type: Run
                       name: Default GN gen
