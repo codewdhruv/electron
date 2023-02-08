@@ -1820,14 +1820,16 @@ pipeline:
                       name: Setup ENV variables
                       identifier: Setup_ENV_variables
                       spec:
+                        connectorRef: harnessdocker
+                        image: ghcr.io/electron/build:e6bebd08a51a0d78ec23e5b3fd7e7c0846412328
                         shell: Sh
                         command: |-
                           git clone --depth=1 https://chromium.googlesource.com/chromium/src.git
                           cd src
                           npm install
 
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src"'
-                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src"
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"'
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
                           echo $BASH_ENV
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
                         envVariables:
@@ -1953,16 +1955,6 @@ pipeline:
                       failureStrategies: []
                   - step:
                       type: Run
-                      name: Run_33
-                      identifier: Run_33
-                      spec:
-                        shell: Sh
-                        command: echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"'
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
                       name: Fix SYNC
                       identifier: Fix_SYNC
                       spec:
@@ -2065,40 +2057,17 @@ pipeline:
                       failureStrategies: []
                   - step:
                       type: Run
-                      name: Add GN
-                      identifier: Add_GN
-                      spec:
-                        shell: Sh
-                        command: |-
-                          echo 'export CHROMIUM_BUILDTOOLS_PATH="$PATH:'"$PWD"'/src/buildtools"'
-                          export CHROMIUM_BUILDTOOLS_PATH="$PATH:/harness/src/buildtools"
-                          echo $BASH_ENV
-                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
-
-                          cd src
-                          gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
-                        envVariables:
-                          ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: /build/args/release.gn
-                          CHECK_DIST_MANIFEST: "'1'"
-                          NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
-                          GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
-                          GN_GOMA_FILE: node -e "console.log(require('./src/utils/goma.js').gnFilePath)"
-                          GN_BUILDFLAG_ARGS: enable_run_as_node = false
-                      when:
-                        stageStatus: All
-                      failureStrategies: []
-                  - step:
-                      type: Run
                       name: Default GN gen
                       identifier: Default_GN_gen
                       spec:
+                        connectorRef: harnessdocker
+                        image: ghcr.io/electron/build:e6bebd08a51a0d78ec23e5b3fd7e7c0846412328
                         shell: Sh
                         command: |+
-                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                          export PATH="$PATH:/harness/depot_tools"
+                          echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"'
+                          export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
                           echo $BASH_ENV
-                          export BASH_ENV=$PATH
+                          export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
 
                           cd src
                           gn gen out/Default --args="import(\"$GN_CONFIG\") import(\"$GN_GOMA_FILE\") $GN_EXTRA_ARGS $GN_BUILDFLAG_ARGS"
