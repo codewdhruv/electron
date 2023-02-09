@@ -1842,8 +1842,6 @@ pipeline:
                       name: Wait for GOMA
                       identifier: Wait_for_GOMA
                       spec:
-                        connectorRef: gcrconnector
-                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
