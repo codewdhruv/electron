@@ -1824,10 +1824,6 @@ pipeline:
                         image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
-                          git clone --depth=1 https://chromium.googlesource.com/chromium/src.git
-                          cd src
-                          npm install
-
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"'
                           export CHROMIUM_BUILDTOOLS_PATH="/harness/src/buildtools"
                           echo $BASH_ENV
