@@ -1960,11 +1960,6 @@ pipeline:
                         command: |-
                           #!/bin/bash -eo pipefail
 
-                          echo 'export PATH="$PATH:'"$PWD"'/depot_tools"'
-                          export PATH="$PATH:/harness/depot_tools"
-                          echo $BASH_ENV
-                          export BASH_ENV=$PATH
-
                           SEDOPTION="-i"
 
                           # Make sure we are using the right ninja
@@ -1979,7 +1974,7 @@ pipeline:
                           export BASH_ENV=$PATH
 
 
-                          cd src/third_party
+                          cd src/third_party/angle
                           git clone https://chromium.googlesource.com/angle/angle.git
                           cd angle
                           cp .git/config .git/config.backup
