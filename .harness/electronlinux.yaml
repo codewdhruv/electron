@@ -1842,6 +1842,8 @@ pipeline:
                       name: Wait for GOMA
                       identifier: Wait_for_GOMA
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -1954,6 +1956,8 @@ pipeline:
                       name: Fix SYNC
                       identifier: Fix_SYNC
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -2057,7 +2061,7 @@ pipeline:
                       identifier: Default_GN_gen
                       spec:
                         connectorRef: harnessdocker
-                        image: ghcr.io/electron/build:e6bebd08a51a0d78ec23e5b3fd7e7c0846412328
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |+
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"'
@@ -2083,6 +2087,8 @@ pipeline:
                       name: electron build
                       identifier: electron_build
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
