@@ -1559,6 +1559,8 @@ pipeline:
                       name: Setup Goma
                       identifier: Setup_Goma
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           #!/bin/sh
@@ -1620,6 +1622,8 @@ pipeline:
                       name: Get depot tools
                       identifier: Run_4
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           git clone --depth=1 https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -1641,7 +1645,7 @@ pipeline:
                           export BASH_ENV=$PATH
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1653,11 +1657,13 @@ pipeline:
                       name: Generate deps hash
                       identifier: Generate_deps_hash
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: node script/generate-deps-hash.js && cat .depshash-target
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1669,13 +1675,15 @@ pipeline:
                       name: Prepare for cross OS sync restore
                       identifier: Prepare_for_cross_OS_sync_restore
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           sudo mkdir -p /var/portal
                           sudo chown -R $(id -u):$(id -g) /var/portal
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1699,6 +1707,8 @@ pipeline:
                       name: Fix the src cache restore point on mac
                       identifier: Fix_the_src_cache_restore_point_on_mac
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -1709,7 +1719,7 @@ pipeline:
                           fi
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1721,6 +1731,8 @@ pipeline:
                       name: Ensure src checkout worked
                       identifier: Ensure_src_checkout_worked
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
@@ -1730,7 +1742,7 @@ pipeline:
                           fi
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1742,13 +1754,15 @@ pipeline:
                       name: Wipe electron
                       identifier: Wipe_electron
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
                           rm -rf src/electron
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1760,6 +1774,8 @@ pipeline:
                       name: Run electron only hooks
                       identifier: Run_electron_only_hooks
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
@@ -1771,7 +1787,7 @@ pipeline:
                           gclient runhooks --spec="solutions=[{'name':'src/electron','url':None,'deps_file':'DEPS','custom_vars':{'process_deps':False},'managed':False}]"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1783,11 +1799,13 @@ pipeline:
                       name: Generate DEPS hash
                       identifier: Generate_DEPS_hash
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: node script/generate-deps-hash.js && cat .depshash-target
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1799,6 +1817,8 @@ pipeline:
                       name: Add depot tools to path
                       identifier: Add_depot_tools_to_path
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -1808,7 +1828,7 @@ pipeline:
                           export BASH_ENV=$PATH
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1830,7 +1850,7 @@ pipeline:
                           export BASH_ENV=$CHROMIUM_BUILDTOOLS_PATH
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -1974,7 +1994,7 @@ pipeline:
                                               \ origin\nmv .git/config.backup .git/config\ngit fetch"
                         envVariables:
                           ELECTRON_OUT_DIR: Default
-                          GN_CONFIG: //electron/build/args/testing.gn
+                          GN_CONFIG: /build/args/testing.gn
                           CHECK_DIST_MANIFEST: "'1'"
                           NINJA_STATUS: "\"[%r processes, %f/%t @ %o/s : %es] \""
                           GCLIENT_EXTRA_ARGS: "'--custom-var=checkout_arm=True --custom-var=checkout_arm64=True'"
@@ -2007,6 +2027,8 @@ pipeline:
                       name: Install third_party deps for gn
                       identifier: Install_third_party_deps_for_gn
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' 
