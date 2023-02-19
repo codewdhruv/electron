@@ -1463,7 +1463,6 @@ pipeline:
         - stage:
             name: linux-x64-testing-test
             identifier: linuxx64testingtest
-            description: ""
             type: CI
             spec:
               cloneCodebase: true
@@ -2565,6 +2564,8 @@ pipeline:
                       when:
                         stageStatus: All
                       failureStrategies: []
+              sharedPaths:
+                - /src/electron/
             when:
               pipelineStatus: All
         - stage:
