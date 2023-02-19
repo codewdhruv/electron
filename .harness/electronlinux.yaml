@@ -1862,6 +1862,8 @@ pipeline:
                       name: Wait for GOMA
                       identifier: Wait_for_GOMA
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -1886,6 +1888,8 @@ pipeline:
                       name: Free up space on MacOS
                       identifier: Free_up_space_on_MacOS
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -2006,6 +2010,8 @@ pipeline:
                       name: Delete all git directories for mac deps
                       identifier: Delete_all_git_directories_for_mac_deps
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
@@ -2066,7 +2072,7 @@ pipeline:
                       name: Default GN gen
                       identifier: Default_GN_gen
                       spec:
-                        connectorRef: harnessdocker
+                        connectorRef: gcrconnector
                         image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |+
@@ -2150,6 +2156,8 @@ pipeline:
                       name: Strip electron binaries
                       identifier: Strip_electron_binaries
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -2178,6 +2186,8 @@ pipeline:
                       name: Build dist zip
                       identifier: Build_dist_zip
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |+
                           #!/bin/bash -eo pipefail
@@ -2203,6 +2213,8 @@ pipeline:
                       name: Check goma stats after build
                       identifier: Check_goma_stats_after_build
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
 
@@ -2228,6 +2240,8 @@ pipeline:
                       name: mksnapshot build
                       identifier: mksnapshot_build
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -2277,6 +2291,8 @@ pipeline:
                       name: Generate cross arch snapshots
                       identifier: Generate_cross_arch_snapshots
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -2318,6 +2334,8 @@ pipeline:
                       name: Build chromedriver
                       identifier: Build_chromedriver
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
@@ -2357,6 +2375,8 @@ pipeline:
                       name: ffmpeg GN gen
                       identifier: ffmpeg_GN_gen
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           echo 'export CHROMIUM_BUILDTOOLS_PATH="'"$PWD"'/src/buildtools"' 
@@ -2378,6 +2398,8 @@ pipeline:
                       name: Non proprietary ffmpeg build
                       identifier: Non_proprietary_ffmpeg_build
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           # Explicitly add ninja to the path
@@ -2403,6 +2425,8 @@ pipeline:
                       name: Generate breakpad symbols
                       identifier: Generate_breakpad_symbols
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -2431,6 +2455,8 @@ pipeline:
                       name: Zip symbols
                       identifier: Zip_symbols
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
                           #!/bin/bash -eo pipefail
@@ -2459,6 +2485,8 @@ pipeline:
                       name: Move all generated artifacts to upload folder
                       identifier: Move_all_generated_artifacts_to_upload_folder
                       spec:
+                        connectorRef: gcrconnector
+                        image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
                           #!/bin/bash -eo pipefail
