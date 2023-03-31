@@ -1981,20 +1981,23 @@ pipeline:
                         image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |-
-                          "#!/bin/bash -eo pipefail\n\necho 'export PATH=\"$PATH:'\"\
-                                              $PWD\"'/depot_tools\"'\nexport PATH=\"$PATH:/harness/depot_tools\"\
-                                              \necho $BASH_ENV\nexport BASH_ENV=$PATH\n\nSEDOPTION=\"-i\"\n\n\
-                                              # Make sure we are using the right ninja\necho 'infra/3pp/tools/ninja/${platform}'\
-                                              \ `gclient getdep --deps-file=src/DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'`\
-                                              \ > ninja_ensure_file\nsed $SEDOPTION \"s/Updating depot_tools...\
-                                              \ //g\" ninja_ensure_file\ncipd ensure --root src/third_party/ninja\
-                                              \ -ensure-file ninja_ensure_file\n\n# Explicitly add ninja to\
-                                              \ the path\necho 'export PATH=\"$PATH:'\"$PWD\"'/src/third_party/ninja\"\
-                                              ' \nexport PATH=\"$PATH:/harness/src/third_party/ninja\"\necho\
-                                              \ $BASH_ENV\nexport BASH_ENV=$PATH\n\n\ncd src/third_party\ngit\
-                                              \ clone https://chromium.googlesource.com/angle/angle.git\ncd\
-                                              \ angle\ncp .git/config .git/config.backup\ngit remote remove\
-                                              \ origin\nmv .git/config.backup .git/config\ngit fetch"
+                          SEDOPTION="-i"
+
+
+                          echo 'infra/3pp/tools/ninja/${platform}' `gclient getdep --deps-file=src/DEPS -r 'src/third_party/ninja:infra/3pp/tools/ninja/${platform}'` > ninja_ensure_file
+                          sed $SEDOPTION "s/Updating depot_tools... //g" ninja_ensure_file
+                          cipd ensure --root src/third_party/ninja -ensure-file ninja_ensure_file
+
+                          # Explicitly add ninja to the path
+                          echo 'export PATH="$PATH:'"$PWD"'/src/third_party/ninja"' >> $BASH_ENV
+
+                          cd src/third_party/angle
+                          rm .git/objects/info/alternates
+                          git remote set-url origin https://chromium.googlesource.com/angle/angle.git
+                          cp .git/config .git/config.backup
+                          git remote remove origin
+                          mv .git/config.backup .git/config
+                          git fetch
                         envVariables:
                           ELECTRON_OUT_DIR: Default
                           GN_CONFIG: /build/args/testing.gn
