@@ -1529,7 +1529,7 @@ pipeline:
                       name: Persisting python cache
                       identifier: Persisting_python_cache
                       spec:
-                        connectorRef: gcpdhruba
+                        connectorRef: gcrconnector
                         bucket: test-electron
                         key: v2.7.18-python-cache-{{ arch }}
                         sourcePaths:
@@ -1543,7 +1543,7 @@ pipeline:
                       name: Persisting brew cache
                       identifier: Persisting_brew_cache
                       spec:
-                        connectorRef: gcpdhruba
+                        connectorRef: gcrconnector
                         bucket: test-electron
                         key: v5-brew-cache-{{ arch }}
                         sourcePaths:
@@ -1558,7 +1558,7 @@ pipeline:
                       name: Setup Goma
                       identifier: Setup_Goma
                       spec:
-                        connectorRef: gcrconnector
+                        connectorRef: gcpdhruba
                         image: us.gcr.io/commeng-play/electron-build
                         shell: Sh
                         command: |
